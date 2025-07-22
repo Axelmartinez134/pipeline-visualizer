@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
+    "dev-mobile": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
     "start": "npm run dev"

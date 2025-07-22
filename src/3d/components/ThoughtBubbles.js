@@ -5,6 +5,7 @@
 
 import { THOUGHT_BUBBLE_CONTENT } from '../constants/processContent.js';
 import { DOMHelpers } from '../utils/domHelpers.js';
+import { DeviceDetection } from '../utils/deviceDetection.js';
 
 export class ThoughtBubbles {
   constructor(camera) {
@@ -31,6 +32,13 @@ export class ThoughtBubbles {
       bubbleDiv.id = `thought-bubble-${stage}`;
       bubbleDiv.style.position = 'absolute';
       bubbleDiv.style.display = 'none';
+      
+      // Mobile-specific styling with improved dimensions
+      if (DeviceDetection.isMobile()) {
+        bubbleDiv.style.maxWidth = '320px';   // Increased from 220px
+        bubbleDiv.style.minWidth = '300px';   // Increased from 200px
+        bubbleDiv.style.fontSize = '0.9rem';
+      }
       
       // Add click handler to dismiss bubble
       bubbleDiv.addEventListener('click', (e) => {
@@ -94,18 +102,52 @@ export class ThoughtBubbles {
     vector.project(this.camera);
     
     const x = (vector.x * 0.5 + 0.5) * containerElement.clientWidth;
-    const y = (-(vector.y * 0.5) + 0.5) * containerElement.clientHeight;
+    let y = (-(vector.y * 0.5) + 0.5) * containerElement.clientHeight;
     
-    // Calculate distance-based offset for better positioning at different zoom levels
-    const distance = this.camera.position.distanceTo(bubbleData.worldPosition);
-    const offsetY = Math.max(15, Math.min(60, distance * 6)); // Scale offset based on distance
+    // Mobile-specific positioning logic
+    if (DeviceDetection.isMobile()) {
+      const distance = this.camera.position.distanceTo(bubbleData.worldPosition);
+      const isZoomedIn = distance < 6; // Detect zoom-in state
+      
+      if (isZoomedIn) {
+        // FIXED: Correct positioning between viewport top and pipe graphics
+        // When zoomed in, camera is at y: -2.4 looking up at y: 2.5
+        // Pipeline at y: 0 projects to upper portion of screen (~30-40% down)
+        const viewportTop = 0;
+        const pipeGraphicsStart = containerElement.clientHeight * 0.35; // Pipeline appears ~35% down (140px in 400px canvas)
+        const centerPosition = (viewportTop + pipeGraphicsStart) / 2; // ~70px from top
+        
+        // Use center position for text box
+        y = centerPosition;
+        
+        // Small offset for fine positioning
+        const mobileOffset = 10; // Minimal offset for true center positioning  
+        bubbleData.element.style.top = `${Math.max(15, y - mobileOffset)}px`;
+        
+        // Increased height constraint for mobile
+        bubbleData.element.style.maxHeight = '160px'; // Increased from 120px
+        bubbleData.element.style.overflow = 'hidden';
+      } else {
+        // Overview mode on mobile - use standard positioning
+        const offsetY = 40; // Smaller offset for mobile overview
+        bubbleData.element.style.top = `${y - offsetY}px`;
+        bubbleData.element.style.maxHeight = 'none';
+        bubbleData.element.style.overflow = 'visible';
+      }
+    } else {
+      // Desktop - keep original logic (no changes)
+      const distance = this.camera.position.distanceTo(bubbleData.worldPosition);
+      const offsetY = Math.max(15, Math.min(60, distance * 6));
+      bubbleData.element.style.top = `${y - offsetY}px`;
+      bubbleData.element.style.maxHeight = 'none';
+      bubbleData.element.style.overflow = 'visible';
+    }
     
     bubbleData.element.style.left = `${x}px`;
-    bubbleData.element.style.top = `${y - offsetY}px`;
     bubbleData.element.style.transform = 'translate(-50%, -100%)';
   }
 
-  showBubble(stage, autoHideDelay = 7000) {
+  showBubble(stage, autoHideDelay = 0) { // CHANGED: Default to 0 (no auto-hide)
     console.log('ThoughtBubbles.showBubble called for stage:', stage);
     console.log('Available bubbles:', this.bubbles.map(b => b.stage));
     
@@ -123,7 +165,8 @@ export class ThoughtBubbles {
     this.updateBubblePosition(bubble);
     console.log('Bubble position updated for:', stage);
     
-    // Auto-hide after delay
+    // REMOVED: Auto-hide functionality - text boxes now persist until navigation
+    // Only hide if explicitly requested (autoHideDelay > 0)
     if (autoHideDelay > 0) {
       setTimeout(() => {
         this.hideBubble(stage);

@@ -167,13 +167,14 @@ export class SceneManager {
       this.thoughtBubbles.hideAllBubbles();
       console.log('All bubbles hidden');
       
-      // Show relevant thought bubble after camera animation
+      // Show relevant thought bubble after camera animation with NO auto-hide
       if (processId !== 'overview') {
-        console.log('Setting timeout to show bubble for:', processId);
+        console.log('Setting timeout to show persistent bubble for:', processId);
         setTimeout(() => {
-          console.log('Attempting to show bubble for:', processId);
-          this.thoughtBubbles.showBubble(processId);
-        }, 2000); // Increased delay to 2 seconds
+          console.log('Attempting to show persistent bubble for:', processId);
+          // CHANGED: Remove auto-hide delay - text box stays visible until navigation
+          this.thoughtBubbles.showBubble(processId); // No second parameter = no auto-hide
+        }, 2000); // Keep 2-second delay for camera animation to complete
       }
     } else {
       console.error('ThoughtBubbles not initialized!');

@@ -74,16 +74,12 @@ function App() {
       </div>
 
       <div className="tabs">
-        <div className="tab active" onClick={() => window.selectProcessTab && window.selectProcessTab('overview')}>Overview</div>
         <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('leadGen')}>Marketing</div>
         <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('qualification')}>Sales</div>
         <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('onboarding')}>Onboarding</div>
         <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('delivery')}>Fulfillment</div>
         <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('retention')}>Retention</div>
-      </div>
-
-      <div className="controls">
-        <button className="control-btn" onClick={() => window.resetCamera && window.resetCamera()}>🏠 Overview</button>
+        <div className="tab tab-overview" onClick={() => window.selectProcessTab && window.selectProcessTab('overview')}>Overview</div>
       </div>
 
       <div className="pipeline-container">
