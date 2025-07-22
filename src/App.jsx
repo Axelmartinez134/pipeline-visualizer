@@ -6,10 +6,18 @@ function App() {
     const script = document.createElement('script')
     script.src = '/pipelineVisualization.js'
     script.async = true
+    script.onload = () => {
+      console.log('Pipeline visualization script loaded')
+    }
+    script.onerror = () => {
+      console.error('Failed to load pipeline visualization script')
+    }
     document.body.appendChild(script)
 
     return () => {
-      document.body.removeChild(script)
+      if (document.body.contains(script)) {
+        document.body.removeChild(script)
+      }
     }
   }, [])
 
