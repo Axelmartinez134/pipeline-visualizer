@@ -67,37 +67,9 @@ body {
     padding-bottom: 5px;
 }
 
-.tab {
-    padding: 8px 15px;
-    border-radius: 20px;
-    border: 2px solid #667eea;
-    background: white;
-    color: #667eea;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    font-size: 0.9rem;
-}
+/* Tab styles moved to App.css to avoid conflicts */
 
-.tab.active {
-    background: #667eea;
-    color: white;
-}
-
-.tab:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.pipeline-container {
-    position: relative;
-    margin: 100px 0 40px 0;
-    padding: 20px 0;
-    height: 400px;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    border-radius: 15px;
-    overflow: hidden;
-}
+/* Pipeline container styles moved to App.css to avoid conflicts */
 
 .css2d-container {
     position: absolute;
@@ -153,23 +125,7 @@ body {
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.toggle-btn {
-    padding: 8px 20px;
-    border: none;
-    border-radius: 20px;
-    background: transparent;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.toggle-btn.active {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
+/* Toggle button styles moved to App.css to avoid conflicts */
 
 .process-analysis {
     background: linear-gradient(145deg, #f8f9fa, #e9ecef);
@@ -360,37 +316,7 @@ body {
     margin-top: 5px;
 }
 
-.slider {
-    width: 100%;
-    height: 8px;
-    border-radius: 4px;
-    background: #ddd;
-    outline: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-}
-
-.slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    cursor: pointer;
-    box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
-    border: 2px solid white;
-}
-
-.slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    cursor: pointer;
-    box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
-    border: 2px solid white;
-}
+/* Slider styles moved to App.css to avoid conflicts */
 
 .simulation-controls {
     display: flex;

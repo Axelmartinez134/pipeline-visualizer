@@ -35,7 +35,7 @@ try {
 
     // Camera positions for different views
     const cameraPositions = {
-        overview: { x: 0, y: 8, z: 15, lookAt: { x: 0, y: 0, z: 0 } },
+        overview: { x: 0, y: 3, z: 5, lookAt: { x: 0, y: 0, z: 0 } }, // Zoomed in 80% more (was z:9, now z:5)
         leadGen: { x: -6, y: 2, z: 5, lookAt: { x: -6, y: 0, z: 0 } },
         qualification: { x: -3, y: 2, z: 5, lookAt: { x: -3, y: 0, z: 0 } },
         onboarding: { x: 0, y: 2, z: 5, lookAt: { x: 0, y: 0, z: 0 } },
@@ -270,14 +270,16 @@ try {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0xf8f9fa);
             
-            // Camera setup
-            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 8, 15);
+            // Camera setup - use fixed canvas size instead of container size
+            const canvasWidth = canvas.clientWidth || container.clientWidth;
+            const canvasHeight = 400; // Fixed height for canvas area only
+            camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
+            camera.position.set(0, 3, 5); // Updated to match new zoomed overview position
             camera.lookAt(0, 0, 0);
             
-            // Renderer setup
+            // Renderer setup - use fixed canvas dimensions
             renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setSize(canvasWidth, canvasHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
@@ -432,9 +434,12 @@ try {
                     const capacity = capacities[index];
                     const position = stagePositions[index];
                     
-                    // Calculate pipe radius based on capacity
-                    const normalizedCapacity = (capacity - minCapacity) / (maxCapacity - minCapacity || 1);
-                    const radius = 0.3 + (normalizedCapacity * 0.7); // 0.3 to 1.0 radius
+                    // Calculate pipe radius based on absolute capacity (not relative)
+                    // Scale each pipe independently based on its own value
+                    const maxPossibleCapacity = 300; // Based on slider max values
+                    const minPossibleCapacity = 10;  // Based on slider min values
+                    const normalizedCapacity = (capacity - minPossibleCapacity) / (maxPossibleCapacity - minPossibleCapacity);
+                    const radius = 0.4 + (normalizedCapacity * 0.8); // 0.4 to 1.2 radius range
                     
                     // Pipe geometry and material
                     const pipeGeometry = new THREE.CylinderGeometry(radius, radius, 2, 16);
@@ -663,16 +668,11 @@ try {
             }
         });
         
-        // Update the displayed value
-        const valueDisplay = document.getElementById(stage + '-value');
-        const units = {
-            leadGen: 'leads/month',
-            qualification: 'qualified/month', 
-            onboarding: 'clients/month',
-            delivery: 'capacity/month',
-            retention: 'retained/month'
-        };
-        valueDisplay.textContent = `${value} ${units[stage]}`;
+        // Update the displayed value - fix ID mismatch
+        const valueDisplay = document.getElementById(stage + 'Value');
+        if (valueDisplay) {
+            valueDisplay.textContent = value;
+        }
         
         createPipeline(); // Recreate pipeline with new dimensions
         updateBottleneckAlert(); // Update bottleneck alert
@@ -718,17 +718,12 @@ try {
 
     function initializeControlValues() {
         const stages = ['leadGen', 'qualification', 'onboarding', 'delivery', 'retention'];
-        const units = {
-            leadGen: 'leads/month',
-            qualification: 'qualified/month', 
-            onboarding: 'clients/month',
-            delivery: 'capacity/month',
-            retention: 'retained/month'
-        };
         
         stages.forEach(stage => {
-            const valueDisplay = document.getElementById(stage + '-value');
-            valueDisplay.textContent = `${businessData[stage]} ${units[stage]}`;
+            const valueDisplay = document.getElementById(stage + 'Value');
+            if (valueDisplay) {
+                valueDisplay.textContent = businessData[stage];
+            }
         });
         
         updateBottleneckAlert();
@@ -757,12 +752,18 @@ try {
                 // Show realistic coaching automation improvement
                 businessData.onboarding = 75; // 3x improvement typical for onboarding automation
                 document.querySelector('input[onchange*="onboarding"]').value = 75;
-                document.getElementById('onboarding-value').textContent = '75 clients/month';
+                const onboardingValue = document.getElementById('onboardingValue');
+                if (onboardingValue) {
+                    onboardingValue.textContent = '75';
+                }
             } else if (scenario === 'current') {
                 // Reset to realistic coaching bottleneck
                 businessData.onboarding = 25;
                 document.querySelector('input[onchange*="onboarding"]').value = 25;
-                document.getElementById('onboarding-value').textContent = '25 clients/month';
+                const onboardingValue = document.getElementById('onboardingValue');
+                if (onboardingValue) {
+                    onboardingValue.textContent = '25';
+                }
             }
             
             createPipeline(); // Recreate with new scenario
@@ -918,44 +919,63 @@ try {
 
     function onWindowResize() {
         const container = document.querySelector('.pipeline-container');
-        camera.aspect = container.clientWidth / container.clientHeight;
+        const canvas = document.getElementById('pipelineCanvas');
+        const canvasWidth = canvas ? canvas.clientWidth : container.clientWidth;
+        const canvasHeight = 400; // Keep canvas height fixed
+        camera.aspect = canvasWidth / canvasHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(canvasWidth, canvasHeight);
     }
 
-    // Initialize when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM Content Loaded');
+    // Initialize immediately when script loads (React handles DOM readiness)
+    function initializePipeline() {
+        console.log('Pipeline script executing...');
         console.log('THREE available:', typeof THREE !== 'undefined');
         console.log('GSAP available:', typeof gsap !== 'undefined');
         
         // Check if required libraries are loaded
         if (typeof THREE === 'undefined') {
             console.error('Three.js not loaded!');
-            document.getElementById('loadingOverlay').textContent = 'Error: Three.js library failed to load. Check internet connection.';
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.textContent = 'Error: Three.js library failed to load. Check internet connection.';
             return;
         }
         
         if (typeof gsap === 'undefined') {
             console.error('GSAP not loaded!');
-            document.getElementById('loadingOverlay').textContent = 'Error: GSAP library failed to load. Check internet connection.';
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.textContent = 'Error: GSAP library failed to load. Check internet connection.';
             return;
         }
         
         console.log('Libraries loaded:', { THREE: !!THREE, gsap: !!gsap });
         
-        // Small delay to ensure canvas is ready
-        setTimeout(() => {
-            try {
-                initializeThreeJS();
-                initializeControlValues(); // Initialize control value displays
-                updateProcessContent('overview'); // Start with overview
-                console.log('Initialization complete!');
-            } catch (initError) {
-                console.error('Error during initialization:', initError);
+        // Wait for canvas to be available
+        const waitForCanvas = () => {
+            const canvas = document.getElementById('pipelineCanvas');
+            const container = document.querySelector('.pipeline-container');
+            
+            if (canvas && container) {
+                console.log('Canvas found, initializing Three.js...');
+                try {
+                    initializeThreeJS();
+                    initializeControlValues(); // Initialize control value displays
+                    updateProcessContent('overview'); // Start with overview
+                    console.log('Initialization complete!');
+                } catch (initError) {
+                    console.error('Error during initialization:', initError);
+                }
+            } else {
+                console.log('Canvas not ready, retrying...');
+                setTimeout(waitForCanvas, 100);
             }
-        }, 100);
-    });
+        };
+        
+        waitForCanvas();
+    }
+
+    // Start initialization immediately
+    initializePipeline();
 
 } catch (globalError) {
     console.error('Global error in script:', globalError);
