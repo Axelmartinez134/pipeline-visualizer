@@ -19,7 +19,7 @@ export const CAMERA_CONFIG = {
     fov: 75,                    // Field of view
     near: 0.1,                  // Near clipping plane
     far: 1000,                  // Far clipping plane
-    position: { x: 0, y: 3, z: 8 }, // Further back to show full pipeline
+    position: { x: 0, y: 3, z: 13 }, // Match overview position exactly
     animation: {
       duration: 2,              // Animation duration in seconds
       easing: "power2.inOut"    // GSAP easing function
@@ -29,7 +29,7 @@ export const CAMERA_CONFIG = {
     fov: 75,
     near: 0.1,
     far: 1000, 
-    position: { x: 0, y: 3, z: 5 }, // Closer for detailed view
+    position: { x: 0, y: 3, z: 13 }, // Match overview position exactly
     animation: {
       duration: 2,
       easing: "power2.inOut"
