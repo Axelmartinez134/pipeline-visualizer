@@ -34,8 +34,8 @@ export class SceneManager {
       this.createRenderer();
       this.createCamera();
       this.createLighting();
-      this.createPipeline();
       this.createThoughtBubbles();
+      this.createPipeline();
       
       this.setupEventListeners();
       this.startAnimation();
