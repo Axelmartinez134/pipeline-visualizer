@@ -6,42 +6,37 @@ function App() {
     // Wait for THREE.js and GSAP to be available
     const waitForLibraries = () => {
       if (typeof window.THREE !== 'undefined' && typeof window.gsap !== 'undefined') {
-        console.log('Libraries loaded, loading pipeline script...')
-        loadPipelineScript()
+        console.log('Libraries loaded, loading modular pipeline system...')
+        loadModularPipeline()
       } else {
         console.log('Waiting for THREE.js and GSAP...')
         setTimeout(waitForLibraries, 100)
       }
     }
 
-    const loadPipelineScript = () => {
-      const script = document.createElement('script')
-      script.src = '/pipelineVisualization.js'
-      script.async = true
-      script.onload = () => {
-        console.log('Pipeline visualization script loaded successfully')
-      }
-      script.onerror = (error) => {
-        console.error('Failed to load pipeline visualization script:', error)
+    const loadModularPipeline = async () => {
+      try {
+        // Import and initialize the new modular 3D pipeline system
+        const { initializePipeline } = await import('./3d/index.js');
+        console.log('Modular pipeline system loaded successfully')
+      } catch (error) {
+        console.error('Failed to load modular pipeline system:', error)
         const overlay = document.getElementById('loadingOverlay')
         if (overlay) {
           overlay.textContent = 'Error: Failed to load 3D visualization'
         }
       }
-      document.body.appendChild(script)
     }
 
     // Start checking for libraries
     waitForLibraries()
 
+    // Cleanup function
     return () => {
-      // Cleanup any dynamically added scripts
-      const scripts = document.querySelectorAll('script[src="/pipelineVisualization.js"]')
-      scripts.forEach(script => {
-        if (document.body.contains(script)) {
-          document.body.removeChild(script)
-        }
-      })
+      // The modular system handles its own cleanup through dispose methods
+      if (window.PipelineVisualization?.dispose) {
+        window.PipelineVisualization.dispose()
+      }
     }
   }, [])
 
@@ -168,7 +163,7 @@ function App() {
             type="button" 
             onClick={() => window.submitLeadForm && window.submitLeadForm()}
             style={{
-              background: 'linear-gradient(45deg, #667eea, #764ba2)', 
+              background: 'linear-gradient(45deg, #1E3A8A, #374151)', 
               color: 'white', 
               border: 'none', 
               padding: '15px 30px', 
