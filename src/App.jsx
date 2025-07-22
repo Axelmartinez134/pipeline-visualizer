@@ -2,22 +2,45 @@ import { useEffect } from 'react'
 
 function App() {
   useEffect(() => {
-    // Load the existing pipeline visualization script
-    const script = document.createElement('script')
-    script.src = '/pipelineVisualization.js'
-    script.async = true
-    script.onload = () => {
-      console.log('Pipeline visualization script loaded')
+    // Wait for THREE.js and GSAP to be available
+    const waitForLibraries = () => {
+      if (typeof window.THREE !== 'undefined' && typeof window.gsap !== 'undefined') {
+        console.log('Libraries loaded, loading pipeline script...')
+        loadPipelineScript()
+      } else {
+        console.log('Waiting for THREE.js and GSAP...')
+        setTimeout(waitForLibraries, 100)
+      }
     }
-    script.onerror = () => {
-      console.error('Failed to load pipeline visualization script')
+
+    const loadPipelineScript = () => {
+      const script = document.createElement('script')
+      script.src = '/pipelineVisualization.js'
+      script.async = true
+      script.onload = () => {
+        console.log('Pipeline visualization script loaded successfully')
+      }
+      script.onerror = (error) => {
+        console.error('Failed to load pipeline visualization script:', error)
+        const overlay = document.getElementById('loadingOverlay')
+        if (overlay) {
+          overlay.textContent = 'Error: Failed to load 3D visualization'
+        }
+      }
+      document.body.appendChild(script)
     }
-    document.body.appendChild(script)
+
+    // Start checking for libraries
+    waitForLibraries()
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script)
-      }
+      // Cleanup any dynamically added scripts
+      const scripts = document.querySelectorAll('script[src="/pipelineVisualization.js"]')
+      scripts.forEach(script => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script)
+        }
+      })
     }
   }, [])
 
