@@ -106,11 +106,22 @@ export class ThoughtBubbles {
   }
 
   showBubble(stage, autoHideDelay = 7000) {
+    console.log('ThoughtBubbles.showBubble called for stage:', stage);
+    console.log('Available bubbles:', this.bubbles.map(b => b.stage));
+    
     const bubble = this.bubbles.find(b => b.stage === stage);
-    if (!bubble) return;
+    if (!bubble) {
+      console.error('No bubble found for stage:', stage);
+      return;
+    }
 
+    console.log('Found bubble, showing it:', bubble.stage);
     bubble.element.classList.add('visible');
     bubble.isVisible = true;
+    
+    // Update position immediately when showing
+    this.updateBubblePosition(bubble);
+    console.log('Bubble position updated for:', stage);
     
     // Auto-hide after delay
     if (autoHideDelay > 0) {
@@ -173,6 +184,13 @@ export class ThoughtBubbles {
       const worldPos = new THREE.Vector3(position, 0.8 + 1.0, 0); // Above the pipe
       this.createBubble(stage, worldPos);
     });
+    
+    // Temporary test: Show a test bubble immediately for debugging
+    console.log('Creating test bubble for onboarding stage');
+    setTimeout(() => {
+      console.log('Test: Showing onboarding bubble for 3 seconds');
+      this.showBubble('onboarding', 3000);
+    }, 3000);
   }
 }
 

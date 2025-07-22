@@ -156,19 +156,27 @@ export class SceneManager {
 
   // Public API methods for UI interaction
   selectProcess(processId) {
+    console.log('SceneManager.selectProcess called with:', processId);
+    
     if (this.camera) {
       this.camera.animateToProcess(processId);
+      console.log('Camera animation started for:', processId);
     }
     
     if (this.thoughtBubbles) {
       this.thoughtBubbles.hideAllBubbles();
+      console.log('All bubbles hidden');
       
       // Show relevant thought bubble after camera animation
       if (processId !== 'overview') {
+        console.log('Setting timeout to show bubble for:', processId);
         setTimeout(() => {
+          console.log('Attempting to show bubble for:', processId);
           this.thoughtBubbles.showBubble(processId);
-        }, 1000);
+        }, 2000); // Increased delay to 2 seconds
       }
+    } else {
+      console.error('ThoughtBubbles not initialized!');
     }
   }
 
