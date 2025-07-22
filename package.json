@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "npm run dev"
   },
   "keywords": [],
   "author": "",
@@ -18,11 +19,14 @@
     "vite": "^7.0.5"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
     "esbuild": "^0.25.8",
     "fdir": "^6.4.6",
     "nanoid": "^3.3.11",
     "picocolors": "^1.1.1",
     "picomatch": "^4.0.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "rollup": "^4.45.1",
     "source-map-js": "^1.2.1",
     "tinyglobby": "^0.2.14"

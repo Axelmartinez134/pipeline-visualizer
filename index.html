@@ -2,168 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutomatedBots Pipeline Analyzer - Find Your Coaching Business Bottlenecks</title>
+    <title>AutomatedBots Pipeline Analyzer - Find Your Business Bottlenecks</title>
     <!-- External Libraries -->
     <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
     <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
     <!-- Local CSS -->
     <link rel="stylesheet" href="style.css">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Visualize your business pipeline bottlenecks and discover AI automation opportunities with AutomatedBots interactive analyzer." />
+    <meta name="keywords" content="AI automation, business pipeline, bottleneck analysis, coaching business, process optimization" />
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="AutomatedBots Pipeline Analyzer" />
+    <meta property="og:description" content="Find and fix your business bottlenecks with AI automation" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://automatedbots.ai" />
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🤖 AutomatedBots Pipeline Analyzer</h1>
-            <p>Find your coaching business bottlenecks. Automate your growth. Scale your revenue.</p>
-        </div>
-
-        <div class="main-dashboard">
-            <div class="industry-selector">
-                <label for="industrySelect" style="margin-right: 10px; font-weight: bold; color: #333;">Business Type:</label>
-                <select id="industrySelect" class="industry-dropdown" onchange="updateIndustry(this.value)">
-                    <option value="coaching">Coaching & Consulting</option>
-                    <option value="saas" disabled style="opacity: 0.5;">SaaS (Coming Soon)</option>
-                    <option value="ecommerce" disabled style="opacity: 0.5;">E-commerce (Coming Soon)</option>
-                    <option value="agency" disabled style="opacity: 0.5;">Marketing Agency (Coming Soon)</option>
-                </select>
-            </div>
-
-            <div class="scenario-tabs">
-                <div class="tab active" onclick="window.selectProcessTab('overview')">Overview</div>
-                <div class="tab" onclick="window.selectProcessTab('leadGen')">Marketing</div>
-                <div class="tab" onclick="window.selectProcessTab('qualification')">Sales</div>
-                <div class="tab" onclick="window.selectProcessTab('onboarding')">Onboarding</div>
-                <div class="tab" onclick="window.selectProcessTab('delivery')">Fulfillment</div>
-                <div class="tab" onclick="window.selectProcessTab('retention')">Retention</div>
-            </div>
-
-            <div class="pipeline-container">
-                <div class="loading-overlay" id="loadingOverlay">
-                    🚀 Initializing 3D Pipeline...
-                </div>
-                <canvas id="pipelineCanvas"></canvas>
-                <div class="pipeline-controls">
-                    <button class="control-btn" onclick="resetCamera()">🏠 Overview</button>
-                </div>
-            </div>
-
-            <!-- Immediate CTA Section -->
-            <div class="pipeline-cta">
-                <h3>🎯 See Your Business Pipeline</h3>
-                <p>Enter your monthly numbers to see where your bottleneck is:</p>
-            </div>
-
-            <!-- Interactive Controls (Moved Up) -->
-            <div class="control-panel">
-                <div class="controls">
-                    <div class="control-group">
-                        <div class="control-label">Lead Generation</div>
-                        <input type="range" class="slider" min="50" max="300" value="120" onchange="updateStage('leadGen', this.value)">
-                        <div class="control-value" id="leadGen-value">120 leads/month</div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="control-label">Lead Qualification</div>
-                        <input type="range" class="slider" min="20" max="100" value="45" onchange="updateStage('qualification', this.value)">
-                        <div class="control-value" id="qualification-value">45 qualified/month</div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="control-label">Client Onboarding</div>
-                        <input type="range" class="slider" min="10" max="80" value="25" onchange="updateStage('onboarding', this.value)">
-                        <div class="control-value" id="onboarding-value">25 clients/month</div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="control-label">Service Delivery</div>
-                        <input type="range" class="slider" min="30" max="120" value="60" onchange="updateStage('delivery', this.value)">
-                        <div class="control-value" id="delivery-value">60 capacity/month</div>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="control-label">Client Retention</div>
-                        <input type="range" class="slider" min="20" max="100" value="35" onchange="updateStage('retention', this.value)">
-                        <div class="control-value" id="retention-value">35 retained/month</div>
-                    </div>
-                </div>
-
-                <!-- Play Button and Revenue Display -->
-                <div class="simulation-controls">
-                    <button class="play-button" onclick="toggleSimulation()">▶</button>
-                    <div class="revenue-display" id="revenueDisplay">
-                        Current Revenue: $75K ARR
-                    </div>
-                    <div class="bottleneck-alert" id="bottleneckAlert">
-                        🚨 <strong>Onboarding</strong> is your bottleneck!
-                    </div>
-                </div>
-            </div>
-
-            <!-- Before/After Toggle -->
-            <div class="automation-toggle">
-                <div class="toggle-container">
-                    <button class="toggle-btn active" onclick="window.switchScenario('current')">Current State</button>
-                    <button class="toggle-btn" onclick="window.switchScenario('optimized')">After Automation</button>
-                </div>
-            </div>
-
-            <!-- Process-Specific Content Area -->
-            <div class="process-analysis" id="processAnalysis">
-                <!-- Content will be dynamically updated based on selected process -->
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value" id="efficiency">21%</div>
-                    <div class="metric-label">Pipeline Efficiency</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="bottleneckImpact">$285K</div>
-                    <div class="metric-label">Lost Revenue (Annual)</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="timeToFix">4-6 weeks</div>
-                    <div class="metric-label">Est. Time to Fix</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" id="roi">280%</div>
-                    <div class="metric-label">Automation ROI</div>
-                </div>
-            </div>
-
-            <!-- Lead Capture Form -->
-            <div style="background: linear-gradient(145deg, #f8f9fa, #e9ecef); border-radius: 20px; padding: 30px; margin-top: 40px; text-align: center;">
-                <h3 style="color: #333; margin-bottom: 15px;">📋 Get Your Custom Automation Roadmap</h3>
-                <p style="color: #666; margin-bottom: 10px;">Want specific automation templates for your coaching business bottleneck?</p>
-                <p style="color: #667eea; font-size: 0.9rem; margin-bottom: 25px;">🤖 <strong>Plus:</strong> Be the first to know when our AI agents feature launches!</p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; max-width: 600px; margin: 0 auto;">
-                    <input type="text" placeholder="Your Name" style="padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
-                    <input type="text" placeholder="Company Name" style="padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
-                    <input type="email" placeholder="Email Address" style="padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
-                    <select style="padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">
-                        <option>Biggest Challenge</option>
-                        <option>Don't know where to start</option>
-                        <option>Too many manual processes</option>
-                        <option>Team overwhelmed</option>
-                        <option>Revenue stuck</option>
-                        <option>Client onboarding takes forever</option>
-                        <option>Unqualified leads wasting time</option>
-                    </select>
-                </div>
-                
-                <button onclick="submitLeadForm()" style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    Get My Automation Roadmap + AI Agent Access
-                </button>
-                
-                <div style="margin-top: 15px; font-size: 0.8rem; color: #666;">
-                    ✓ Instant template access ✓ Custom roadmap ✓ AI agents early access ✓ Free strategy call
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Local JavaScript - Add at the end of body for better performance -->
-    <script src="main.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
