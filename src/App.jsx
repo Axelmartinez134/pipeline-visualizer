@@ -6,12 +6,28 @@ function App() {
     // Wait for THREE.js and GSAP to be available
     const waitForLibraries = () => {
       if (typeof window.THREE !== 'undefined' && typeof window.gsap !== 'undefined') {
-        console.log('Libraries loaded, loading modular pipeline system...')
-        loadModularPipeline()
+        console.log('Libraries loaded, waiting for CSS to be ready...')
+        waitForCSSAndLayout()
       } else {
         console.log('Waiting for THREE.js and GSAP...')
         setTimeout(waitForLibraries, 100)
       }
+    }
+
+    const waitForCSSAndLayout = () => {
+      // Wait for CSS to be applied and container to have proper dimensions
+      const checkLayoutReady = () => {
+        const container = document.querySelector('.pipeline-container')
+        if (container && container.clientWidth > 0) {
+          console.log('CSS loaded and layout ready, initializing pipeline...')
+          // Small additional delay to ensure all styles are fully applied
+          setTimeout(loadModularPipeline, 50)
+        } else {
+          console.log('Waiting for CSS layout...')
+          setTimeout(checkLayoutReady, 50)
+        }
+      }
+      checkLayoutReady()
     }
 
     const loadModularPipeline = async () => {
