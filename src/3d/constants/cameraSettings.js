@@ -6,11 +6,11 @@
 // Base camera positions for different process views
 export const CAMERA_POSITIONS = {
   overview: { x: 0, y: 3, z: 13, lookAt: { x: 0, y: 0, z: 0 } },
-  leadGen: { x: -6, y: -5.5, z: 2, lookAt: { x: -6, y: 0.5, z: 0 } },
-  qualification: { x: -3, y: -5.5, z: 2, lookAt: { x: -3, y: 0.5, z: 0 } },
-  onboarding: { x: 0, y: -5.5, z: 2, lookAt: { x: 0, y: 0.5, z: 0 } },
-  delivery: { x: 3, y: -5.5, z: 2, lookAt: { x: 3, y: 0.5, z: 0 } },
-  retention: { x: 6, y: -5.5, z: 2, lookAt: { x: 6, y: 0.5, z: 0 } }
+  leadGen: { x: -6, y: -2.4, z: 2, lookAt: { x: -6, y: 2.5, z: 0 } },
+  qualification: { x: -3, y: -2.4, z: 2, lookAt: { x: -3, y: 2.5, z: 0 } },
+  onboarding: { x: 0, y: -2.4, z: 2, lookAt: { x: 0, y: 2.5, z: 0 } },
+  delivery: { x: 3, y: -2.4, z: 2, lookAt: { x: 3, y: 2.5, z: 0 } },
+  retention: { x: 6, y: -2.4, z: 2, lookAt: { x: 6, y: 2.5, z: 0 } }
 };
 
 // Mobile-first camera configuration
@@ -19,7 +19,7 @@ export const CAMERA_CONFIG = {
     fov: 75,                    // Field of view
     near: 0.1,                  // Near clipping plane
     far: 1000,                  // Far clipping plane
-    position: { x: 0, y: 3, z: 13 }, // Match overview position exactly
+    position: { x: 0, y: 3, z: 8 }, // Further back to show full pipeline
     animation: {
       duration: 2,              // Animation duration in seconds
       easing: "power2.inOut"    // GSAP easing function
