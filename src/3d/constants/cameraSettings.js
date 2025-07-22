@@ -5,12 +5,12 @@
 
 // Base camera positions for different process views
 export const CAMERA_POSITIONS = {
-  overview: { x: 0, y: 3, z: 9, lookAt: { x: 0, y: 0, z: 0 } },
-  leadGen: { x: -6, y: -1.2, z: 6, lookAt: { x: -6, y: 0.5, z: 0 } },
-  qualification: { x: -3, y: -1.2, z: 6, lookAt: { x: -3, y: 0.5, z: 0 } },
-  onboarding: { x: 0, y: -1.2, z: 6, lookAt: { x: 0, y: 0.5, z: 0 } },
-  delivery: { x: 3, y: -1.2, z: 6, lookAt: { x: 3, y: 0.5, z: 0 } },
-  retention: { x: 6, y: -1.2, z: 6, lookAt: { x: 6, y: 0.5, z: 0 } }
+  overview: { x: 0, y: 3, z: 10, lookAt: { x: 0, y: 0, z: 0 } },
+  leadGen: { x: -6, y: -1.35, z: 6, lookAt: { x: -6, y: 0.5, z: 0 } },
+  qualification: { x: -3, y: -1.35, z: 6, lookAt: { x: -3, y: 0.5, z: 0 } },
+  onboarding: { x: 0, y: -1.35, z: 6, lookAt: { x: 0, y: 0.5, z: 0 } },
+  delivery: { x: 3, y: -1.35, z: 6, lookAt: { x: 3, y: 0.5, z: 0 } },
+  retention: { x: 6, y: -1.35, z: 6, lookAt: { x: 6, y: 0.5, z: 0 } }
 };
 
 // Mobile-first camera configuration
