@@ -184,13 +184,6 @@ export class ThoughtBubbles {
       const worldPos = new THREE.Vector3(position, 0.8 + 1.0, 0); // Above the pipe
       this.createBubble(stage, worldPos);
     });
-    
-    // Temporary test: Show a test bubble immediately for debugging
-    console.log('Creating test bubble for onboarding stage');
-    setTimeout(() => {
-      console.log('Test: Showing onboarding bubble for 3 seconds');
-      this.showBubble('onboarding', 3000);
-    }, 3000);
   }
 }
 
