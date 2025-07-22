@@ -926,17 +926,19 @@ try {
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM Content Loaded');
+        console.log('THREE available:', typeof THREE !== 'undefined');
+        console.log('GSAP available:', typeof gsap !== 'undefined');
         
         // Check if required libraries are loaded
         if (typeof THREE === 'undefined') {
             console.error('Three.js not loaded!');
-            document.getElementById('loadingOverlay').textContent = 'Error: Three.js library failed to load';
+            document.getElementById('loadingOverlay').textContent = 'Error: Three.js library failed to load. Check internet connection.';
             return;
         }
         
         if (typeof gsap === 'undefined') {
             console.error('GSAP not loaded!');
-            document.getElementById('loadingOverlay').textContent = 'Error: GSAP library failed to load';
+            document.getElementById('loadingOverlay').textContent = 'Error: GSAP library failed to load. Check internet connection.';
             return;
         }
         
