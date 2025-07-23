@@ -37,6 +37,34 @@ export const CAMERA_CONFIG = {
   }
 };
 
+// Arc transition configuration for smooth close-up to close-up transitions
+export const ARC_TRANSITION_CONFIG = {
+  mobile: {
+    enabled: true,
+    zoomOutDistance: 2,         // Less zoom-out on mobile for performance
+    step1Duration: 0.8,         // Faster transitions on mobile
+    step2Duration: 0.8,
+    easing: "power1.inOut",     // Smoother easing for mobile
+    totalDuration: 1.6          // Total arc transition time
+  },
+  desktop: {
+    enabled: true,
+    zoomOutDistance: 3,         // More dramatic zoom-out on desktop
+    step1Duration: 1.2,         // Slower, more cinematic on desktop
+    step2Duration: 1.2,
+    easing: "power2.inOut",     // More pronounced easing
+    totalDuration: 2.4          // Total arc transition time
+  }
+};
+
+// Arc detection configuration
+export const ARC_DETECTION = {
+  enabled: true,
+  closeUpThreshold: 5,          // Z distance that triggers arc transition
+  minHorizontalDistance: 1.5,   // Minimum X distance to trigger arc
+  debugMode: true               // Enable console logging for debugging
+};
+
 // Material colors
 export const MATERIAL_COLORS = {
   BOTTLENECK: 0xff4444,     // Red for bottlenecks

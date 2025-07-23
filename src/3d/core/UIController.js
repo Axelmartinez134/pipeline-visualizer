@@ -13,6 +13,9 @@ export class UIController {
     this.businessData = businessData;
     this.selectedProcess = 'overview';
     this.currentScenario = 'current';
+    this.isTransitionInProgress = false;
+    this.lastTransitionTime = 0;
+    this.minTransitionInterval = 500; // Minimum time between transitions (ms)
     this.init();
   }
 
@@ -20,31 +23,192 @@ export class UIController {
     this.initializeControlValues();
     this.updateProcessContent('overview');
     this.updateBusinessMetrics();
+    
+    // CRITICAL FIX: Set Overview tab as active on app load
+    this.updateTabStates('overview');
   }
 
-  // Process tab selection
+  // Process tab selection with transition throttling
   selectProcess(processId) {
+    // Prevent rapid clicking and transition conflicts
+    const now = Date.now();
+    if (this.isTransitionInProgress) {
+      console.log('Transition in progress, ignoring click for:', processId);
+      return false;
+    }
+
+    if (now - this.lastTransitionTime < this.minTransitionInterval) {
+      console.log('Too soon after last transition, ignoring click for:', processId);
+      return false;
+    }
+
+    // Check if scene manager camera is transitioning
+    if (this.sceneManager?.camera?.isTransitioning && this.sceneManager.camera.isTransitioning()) {
+      console.log('Camera transition in progress, ignoring click for:', processId);
+      return false;
+    }
+
+    // Update transition state
+    this.isTransitionInProgress = true;
+    this.lastTransitionTime = now;
     this.selectedProcess = processId;
     
-    // Update UI state
-    DOMHelpers.updateTabStates(`.tab[onclick*="${processId}"]`);
+    // Add visual feedback
+    this.addTransitionFeedback(processId);
     
-    // Update 3D scene
-    this.sceneManager.selectProcess(processId);
+    // Update UI state - Fix tab selection logic
+    this.updateTabStates(processId);
+    
+    // Start 3D scene transition
+    const transitionSuccess = this.sceneManager.selectProcess(processId);
+    
+    if (!transitionSuccess) {
+      // Rollback if transition failed
+      this.isTransitionInProgress = false;
+      this.removeTransitionFeedback();
+      return false;
+    }
     
     // Update content
     this.updateProcessContent(processId);
+    
+    // Clear transition state after estimated completion time
+    const estimatedDuration = this.getEstimatedTransitionDuration(processId);
+    setTimeout(() => {
+      this.isTransitionInProgress = false;
+      this.removeTransitionFeedback();
+    }, estimatedDuration + 200); // Add 200ms buffer
+    
+    return true;
   }
 
-  // Reset to overview
+  updateTabStates(processId) {
+    try {
+      // Remove active class from all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Find and activate the correct tab
+      // Try multiple approaches to find the tab
+      let targetTab = null;
+      
+      // Approach 1: Look for tab containing process name
+      const processNames = {
+        'leadGen': 'Marketing',
+        'qualification': 'Sales', 
+        'onboarding': 'Onboarding',
+        'delivery': 'Fulfillment',
+        'retention': 'Retention',
+        'overview': 'Overview'
+      };
+      
+      const processName = processNames[processId];
+      if (processName) {
+        targetTab = Array.from(document.querySelectorAll('.tab')).find(tab => 
+          tab.textContent.trim() === processName
+        );
+      }
+      
+      // Approach 2: Try finding by data attribute if available
+      if (!targetTab) {
+        targetTab = document.querySelector(`.tab[data-process="${processId}"]`);
+      }
+      
+      // Approach 3: Try finding by class name
+      if (!targetTab) {
+        targetTab = document.querySelector(`.tab-${processId}`);
+      }
+      
+      if (targetTab) {
+        targetTab.classList.add('active');
+        console.log(`Activated tab for ${processId}:`, targetTab.textContent);
+      } else {
+        console.warn(`Could not find tab for process: ${processId}`);
+      }
+    } catch (error) {
+      console.warn('Error updating tab states:', error);
+    }
+  }
+
+  getEstimatedTransitionDuration(processId) {
+    // Get camera to determine transition type
+    const camera = this.sceneManager?.camera;
+    if (!camera) return 2000; // Default fallback
+    
+    try {
+      const targetPos = camera.camera ? camera.constructor.CAMERA_POSITIONS?.[processId] : null;
+      if (!targetPos) return 2000;
+      
+      // Check if this would be an arc transition
+      const currentZ = camera.camera.position.z;
+      const isCurrentCloseUp = currentZ < 5;
+      const isTargetCloseUp = targetPos.z < 5;
+      const hasHorizontalDistance = Math.abs(camera.camera.position.x - targetPos.x) >= 1.5;
+      
+      if (isCurrentCloseUp && isTargetCloseUp && hasHorizontalDistance) {
+        // Arc transition - use total duration from config
+        const arcConfig = camera.getCurrentArcConfig ? camera.getCurrentArcConfig() : { totalDuration: 2400 };
+        return arcConfig.totalDuration || 2400;
+      } else {
+        // Direct transition
+        const config = camera.getCurrentConfig ? camera.getCurrentConfig() : { animation: { duration: 2 } };
+        return (config.animation?.duration || 2) * 1000;
+      }
+    } catch (error) {
+      console.warn('Error estimating transition duration:', error);
+      return 2000; // Safe fallback
+    }
+  }
+
+  addTransitionFeedback(processId) {
+    // Add transitioning class to target tab
+    const targetTab = document.querySelector(`.tab[onclick*="${processId}"]`);
+    if (targetTab) {
+      targetTab.classList.add('transitioning');
+    }
+    
+    // Add transitioning class to pipeline container
+    const container = document.querySelector('.pipeline-container');
+    if (container) {
+      container.classList.add('arc-transitioning');
+    }
+  }
+
+  removeTransitionFeedback() {
+    // Remove transitioning class from all tabs
+    document.querySelectorAll('.tab.transitioning').forEach(tab => {
+      tab.classList.remove('transitioning');
+    });
+    
+    // Remove transitioning class from pipeline container
+    const container = document.querySelector('.pipeline-container');
+    if (container) {
+      container.classList.remove('arc-transitioning');
+    }
+  }
+
+  // Reset to overview with safety checks
   resetCamera() {
+    if (this.isTransitionInProgress) {
+      console.log('Transition in progress, deferring camera reset');
+      setTimeout(() => this.resetCamera(), 100);
+      return;
+    }
+
+    if (ARC_DETECTION.debugMode) {
+      console.log('Resetting camera to overview from:', this.selectedProcess);
+    }
+
     this.selectedProcess = 'overview';
-    this.sceneManager.resetCamera();
+    
+    // Use the normal selectProcess flow to ensure consistent behavior
+    this.sceneManager.selectProcess('overview');
     this.updateProcessContent('overview');
-    DOMHelpers.updateTabStates('.tab[onclick*="overview"]');
+    this.updateTabStates('overview');
   }
 
-  // Update stage capacity
+  // Update stage capacity with transition state awareness
   updateStage(stage, value) {
     this.businessData[stage] = parseInt(value);
     
@@ -151,6 +315,17 @@ export class UIController {
     if (alertElement) {
       alertElement.innerHTML = `🚨 <strong>${stageName}</strong> is your bottleneck!`;
     }
+  }
+
+  // Get current transition state for debugging
+  getTransitionState() {
+    return {
+      isTransitionInProgress: this.isTransitionInProgress,
+      lastTransitionTime: this.lastTransitionTime,
+      selectedProcess: this.selectedProcess,
+      cameraTransitionInfo: this.sceneManager?.camera?.getTransitionInfo ? 
+        this.sceneManager.camera.getTransitionInfo() : null
+    };
   }
 
   // Update process content panel

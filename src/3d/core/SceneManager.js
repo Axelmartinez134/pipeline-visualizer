@@ -183,7 +183,8 @@ export class SceneManager {
 
   resetCamera() {
     if (this.camera) {
-      this.camera.resetToOverview();
+      // Use selectProcess for consistency instead of separate resetToOverview method
+      this.selectProcess('overview');
     }
     
     if (this.thoughtBubbles) {

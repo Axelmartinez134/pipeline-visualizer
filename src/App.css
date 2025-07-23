@@ -290,6 +290,81 @@
     box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
 }
 
+/* Arc Transition Visual Feedback */
+.tab.transitioning {
+    opacity: 0.7;
+    pointer-events: none;
+    background: linear-gradient(45deg, #1E3A8A, #374151);
+    color: white;
+    position: relative;
+}
+
+.tab.transitioning::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: tabSpinner 1s linear infinite;
+}
+
+@keyframes tabSpinner {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.pipeline-container.arc-transitioning {
+    position: relative;
+}
+
+.pipeline-container.arc-transitioning::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(30, 58, 138, 0.3);
+    border-top: 3px solid #1E3A8A;
+    border-radius: 50%;
+    animation: pipelineSpinner 1.2s linear infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+@keyframes pipelineSpinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Subtle transition indicator for mobile */
+@media (max-width: 768px) {
+    .pipeline-container.arc-transitioning::before {
+        width: 16px;
+        height: 16px;
+        top: 15px;
+        right: 15px;
+        border-width: 2px;
+    }
+    
+    .tab.transitioning::after {
+        width: 10px;
+        height: 10px;
+        right: 8px;
+    }
+}
+
+/* Prevent rapid clicking on all tabs during transition */
+.pipeline-container.arc-transitioning + .tabs .tab:not(.transitioning) {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 .analysis-section {
     background: white;
     border-radius: 20px;
