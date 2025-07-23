@@ -16,6 +16,7 @@ export class UIController {
     this.isTransitionInProgress = false;
     this.lastTransitionTime = 0;
     this.minTransitionInterval = 500; // Minimum time between transitions (ms)
+    this.educationalOverlayTimeout = null; // Track delayed overlay timeout
     this.init();
   }
 
@@ -26,6 +27,10 @@ export class UIController {
     
     // CRITICAL FIX: Set Overview tab as active on app load
     this.updateTabStates('overview');
+    
+    // Initialize educational overlays
+    this.updateEducationalOverlays();
+    this.showEducationalOverlays();
   }
 
   // Process tab selection with transition throttling
@@ -51,7 +56,13 @@ export class UIController {
     // Update transition state
     this.isTransitionInProgress = true;
     this.lastTransitionTime = now;
+    
+    // Capture previous state for educational overlays
+    const previousProcess = this.selectedProcess;
     this.selectedProcess = processId;
+    
+    // Handle educational overlays with previous state
+    this.handleEducationalOverlays(processId, previousProcess);
     
     // Add visual feedback
     this.addTransitionFeedback(processId);
@@ -221,6 +232,11 @@ export class UIController {
     // Update metrics
     this.updateBusinessMetrics();
     this.updateBottleneckAlert();
+    
+    // Update educational overlays if on overview
+    if (this.selectedProcess === 'overview') {
+      this.updateEducationalOverlays();
+    }
   }
 
   // Toggle water simulation
@@ -258,6 +274,11 @@ export class UIController {
     // Update metrics and content
     this.updateBusinessMetrics();
     this.updateBottleneckAlert();
+    
+    // Update educational overlays if on overview
+    if (this.selectedProcess === 'overview') {
+      this.updateEducationalOverlays();
+    }
     
     if (this.selectedProcess !== 'overview') {
       this.updateProcessContent(this.selectedProcess);
@@ -466,6 +487,139 @@ export class UIController {
       cameraTransitionInfo: this.sceneManager?.camera?.getTransitionInfo ? 
         this.sceneManager.camera.getTransitionInfo() : null
     };
+  }
+
+  // Educational Overlays Management
+  handleEducationalOverlays(processId, previousProcess) {
+    console.log('handleEducationalOverlays called with:', { processId, previousProcess });
+    
+    // Clear any existing delayed overlay timeout
+    if (this.educationalOverlayTimeout) {
+      console.log('Clearing existing overlay timeout');
+      clearTimeout(this.educationalOverlayTimeout);
+      this.educationalOverlayTimeout = null;
+    }
+    
+    if (processId === 'overview') {
+      // Check if we're transitioning FROM a specific stage TO overview
+      const wasOnSpecificStage = previousProcess && previousProcess !== 'overview';
+      console.log('Transitioning to overview. Was on specific stage:', wasOnSpecificStage);
+      
+      if (wasOnSpecificStage) {
+        // Coming back to overview from a zoomed stage - delay overlay appearance
+        console.log('Hiding overlays and setting up delayed appearance');
+        this.hideEducationalOverlays();
+        
+        // Calculate 80% of animation duration for delayed appearance
+        const totalDuration = this.getEstimatedTransitionDuration(processId);
+        const delayTime = totalDuration * 0.8;
+        console.log('Animation duration:', totalDuration, 'Delay time:', delayTime);
+        
+        // Show overlays after 80% of camera animation is complete
+        this.educationalOverlayTimeout = setTimeout(() => {
+          console.log('Delayed timeout fired, checking if still on overview');
+          // Only show if we're still on overview (user didn't click away)
+          if (this.selectedProcess === 'overview') {
+            console.log('Still on overview, showing overlays');
+            this.updateEducationalOverlays();
+            this.showEducationalOverlays();
+          } else {
+            console.log('No longer on overview, not showing overlays');
+          }
+          this.educationalOverlayTimeout = null;
+        }, delayTime);
+      } else {
+        // Direct access to overview or already on overview - show immediately
+        console.log('Direct access to overview, showing immediately');
+        this.updateEducationalOverlays();
+        this.showEducationalOverlays();
+      }
+    } else {
+      // Zooming into specific stage - hide overlays immediately
+      console.log('Zooming into specific stage, hiding overlays');
+      this.hideEducationalOverlays();
+    }
+  }
+
+  updateEducationalOverlays() {
+    try {
+      // Update business type from dropdown
+      const industrySelect = document.getElementById('industrySelect');
+      const businessTypeText = document.getElementById('businessTypeText');
+      
+      if (industrySelect && businessTypeText) {
+        const selectedOption = industrySelect.options[industrySelect.selectedIndex];
+        const businessType = selectedOption ? selectedOption.text.replace(' Business', '') : 'Coaching';
+        businessTypeText.textContent = businessType;
+      }
+
+      // Update constraint stage and triangle position
+      const constraintStageText = document.getElementById('constraintStageText');
+      const bottomOverlay = document.getElementById('educationalBottomOverlay');
+      
+      if (constraintStageText && bottomOverlay) {
+        const bottleneckStage = this.sceneManager.pipeline.getBottleneckStage();
+        
+        const stageNames = {
+          'leadGen': 'Marketing',
+          'qualification': 'Sales', 
+          'onboarding': 'Onboarding',
+          'delivery': 'Fulfillment',
+          'retention': 'Retention'
+        };
+        
+        // Map stage names for triangle classes
+        const triangleStageMap = {
+          'leadGen': 'marketing',
+          'qualification': 'sales',
+          'onboarding': 'onboarding', 
+          'delivery': 'fulfillment',
+          'retention': 'retention'
+        };
+        
+        constraintStageText.textContent = stageNames[bottleneckStage] || 'Onboarding';
+        
+        // Remove all triangle classes
+        bottomOverlay.classList.remove('triangle-marketing', 'triangle-sales', 'triangle-onboarding', 'triangle-fulfillment', 'triangle-retention');
+        
+        // Add the correct triangle class for current bottleneck
+        const triangleStage = triangleStageMap[bottleneckStage] || 'onboarding';
+        const triangleClass = `triangle-${triangleStage}`;
+        bottomOverlay.classList.add(triangleClass);
+      }
+    } catch (error) {
+      console.error('Error updating educational overlays:', error);
+    }
+  }
+
+  showEducationalOverlays() {
+    console.log('showEducationalOverlays called');
+    const topOverlay = document.getElementById('educationalTopOverlay');
+    const bottomOverlay = document.getElementById('educationalBottomOverlay');
+    
+    if (topOverlay) {
+      topOverlay.classList.remove('hidden');
+      console.log('Top overlay shown');
+    }
+    if (bottomOverlay) {
+      bottomOverlay.classList.remove('hidden');
+      console.log('Bottom overlay shown');
+    }
+  }
+
+  hideEducationalOverlays() {
+    console.log('hideEducationalOverlays called');
+    const topOverlay = document.getElementById('educationalTopOverlay');
+    const bottomOverlay = document.getElementById('educationalBottomOverlay');
+    
+    if (topOverlay) {
+      topOverlay.classList.add('hidden');
+      console.log('Top overlay hidden');
+    }
+    if (bottomOverlay) {
+      bottomOverlay.classList.add('hidden');
+      console.log('Bottom overlay hidden');
+    }
   }
 
   // Update process content panel

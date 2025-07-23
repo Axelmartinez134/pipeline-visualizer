@@ -86,7 +86,28 @@ function App() {
         <div id="loadingOverlay" className="loading-overlay">
           🚀 Initializing 3D Pipeline...
         </div>
+
+        {/* Educational Text Overlays - Only show on Overview */}
+        <div id="educationalTopOverlay" className="educational-overlay top-overlay hidden">
+          <div className="educational-content">
+            <span className="educational-text">
+              This is <strong>Theory of Constraints</strong> applied to your <strong id="businessTypeText">Coaching</strong> business
+            </span>
+          </div>
+        </div>
+
         <canvas id="pipelineCanvas"></canvas>
+
+        <div id="educationalBottomOverlay" className="educational-overlay bottom-overlay hidden">
+          <div className="educational-content">
+            <div className="constraint-indicator">
+              👆 <strong id="constraintStageText">Onboarding</strong> is your bottleneck limiting you to <strong id="constraintRevenueText">$75,000</strong> ARR
+            </div>
+            <div className="educational-cta">
+              <strong>Click the tabs above to explore automation solutions</strong>
+            </div>
+          </div>
+        </div>
 
         <div className="capacity-controls">
           <div className="slider-group">
