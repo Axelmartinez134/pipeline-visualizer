@@ -171,8 +171,11 @@ function App() {
             </select>
           </div>
           
+          <div id="formStatus"></div>
+          
           <button 
             type="button" 
+            id="submitBtn"
             onClick={() => window.submitLeadForm && window.submitLeadForm()}
             style={{
               background: 'linear-gradient(45deg, #1E3A8A, #374151)', 
@@ -184,7 +187,8 @@ function App() {
               fontWeight: 'bold', 
               marginTop: '20px', 
               cursor: 'pointer', 
-              width: '100%'
+              width: '100%',
+              transition: 'all 0.3s ease'
             }}
           >
             Get My Automation Strategy

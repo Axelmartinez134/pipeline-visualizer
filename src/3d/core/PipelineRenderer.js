@@ -47,6 +47,13 @@ export class PipelineRenderer {
       // Expose global functions for HTML onclick handlers
       this.exposeGlobalFunctions();
       
+      // Enable debug features in development
+      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+        ErrorHandler.enableDebugMode();
+        this.addArcTransitionTestFunction();
+        console.log('🧪 Test arc transitions with: window.testArcTransitions()');
+      }
+      
       this.isInitialized = true;
       
       console.log('Pipeline Renderer initialization complete!');
@@ -98,6 +105,47 @@ export class PipelineRenderer {
       if (this.uiController) {
         this.uiController.submitLeadForm();
       }
+    };
+  }
+
+  addArcTransitionTestFunction() {
+    // Add test function to global scope for easy testing
+    window.testArcTransitions = () => {
+      console.log('🧪 Testing arc transitions between all sections...');
+      
+      const sections = ['leadGen', 'qualification', 'onboarding', 'delivery', 'retention'];
+      let testIndex = 0;
+      
+      const runNextTest = () => {
+        if (testIndex >= sections.length - 1) {
+          console.log('✅ Arc transition tests completed!');
+          return;
+        }
+        
+        const fromSection = sections[testIndex];
+        const toSection = sections[testIndex + 1];
+        
+        console.log(`Testing: ${fromSection} → ${toSection}`);
+        
+        // Navigate to first section
+        this.uiController.selectProcess(fromSection);
+        
+        // Wait for transition to complete, then go to next
+        setTimeout(() => {
+          this.uiController.selectProcess(toSection);
+          testIndex++;
+          
+          // Continue to next test
+          setTimeout(runNextTest, 3000);
+        }, 2000);
+      };
+      
+      // Start with overview, then begin tests
+      this.uiController.selectProcess('overview');
+      setTimeout(() => {
+        this.uiController.selectProcess(sections[0]);
+        setTimeout(runNextTest, 2000);
+      }, 1000);
     };
   }
 

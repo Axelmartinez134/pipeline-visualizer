@@ -274,8 +274,144 @@ export class UIController {
   }
 
   // Lead form submission
-  submitLeadForm() {
-    alert("Thank you! Your automation roadmap will be sent to your email within 24 hours. We'll also follow up to schedule your strategy call.");
+  async submitLeadForm() {
+    try {
+      // Get form data
+      const formData = this.collectFormData();
+      
+      // Validate required fields
+      if (!this.validateFormData(formData)) {
+        return; // Validation errors already shown
+      }
+
+      // Show loading state
+      this.setFormLoading(true);
+
+      // Import Airtable service
+      const { airtableService } = await import('../../services/airtableService.js');
+
+      // Collect smart pipeline data
+      const pipelineData = airtableService.collectPipelineData();
+      const userJourney = airtableService.collectUserJourney();
+
+      // Submit to Airtable
+      await airtableService.submitLead({
+        ...formData,
+        pipelineData,
+        userJourney
+      });
+
+      // Show success message
+      this.showFormSuccess();
+
+    } catch (error) {
+      console.error('Form submission error:', error);
+      this.showFormError(error.message);
+    } finally {
+      this.setFormLoading(false);
+    }
+  }
+
+  // Collect form data from DOM
+  collectFormData() {
+    return {
+      name: document.getElementById('name')?.value?.trim() || '',
+      email: document.getElementById('email')?.value?.trim() || '',
+      company: document.getElementById('company')?.value?.trim() || '',
+      challenge: document.getElementById('challenge')?.value || '',
+      industry: document.getElementById('industrySelect')?.value || 'coaching'
+    };
+  }
+
+  // Validate form data
+  validateFormData(formData) {
+    const errors = [];
+    
+    if (!formData.name) errors.push('Name is required');
+    if (!formData.email) errors.push('Email is required');
+    if (!formData.company) errors.push('Company name is required');
+    if (!formData.challenge) errors.push('Please select your biggest challenge');
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    if (errors.length > 0) {
+      this.showFormError(errors.join('<br>'));
+      return false;
+    }
+
+    return true;
+  }
+
+  // Show loading state
+  setFormLoading(isLoading) {
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('leadForm');
+    
+    if (submitBtn) {
+      submitBtn.disabled = isLoading;
+      submitBtn.textContent = isLoading ? '⏳ Submitting...' : 'Get My Automation Strategy';
+      submitBtn.style.opacity = isLoading ? '0.7' : '1';
+    }
+    
+    if (form) {
+      form.style.pointerEvents = isLoading ? 'none' : 'auto';
+    }
+  }
+
+  // Show success message
+  showFormSuccess() {
+    const statusElement = document.getElementById('formStatus');
+    if (statusElement) {
+      statusElement.innerHTML = `
+        <div style="
+          background: linear-gradient(135deg, #059669, #34D399);
+          color: white;
+          padding: 15px;
+          border-radius: 10px;
+          margin: 15px 0;
+          text-align: center;
+          font-weight: 500;
+        ">
+          ✅ Success! Your automation strategy will be sent within 24 hours.<br>
+          We'll follow up to schedule your strategy call.
+        </div>
+      `;
+    }
+
+    // Reset form after short delay
+    setTimeout(() => {
+      document.getElementById('leadForm')?.reset();
+      if (statusElement) statusElement.innerHTML = '';
+    }, 5000);
+  }
+
+  // Show error message
+  showFormError(message) {
+    const statusElement = document.getElementById('formStatus');
+    if (statusElement) {
+      statusElement.innerHTML = `
+        <div style="
+          background: linear-gradient(135deg, #DC2626, #EF4444);
+          color: white;
+          padding: 15px;
+          border-radius: 10px;
+          margin: 15px 0;
+          text-align: center;
+          font-weight: 500;
+        ">
+          ❌ ${message}
+        </div>
+      `;
+
+      // Auto-hide error after 7 seconds
+      setTimeout(() => {
+        if (statusElement) statusElement.innerHTML = '';
+      }, 7000);
+    }
   }
 
   // Initialize control values
