@@ -39,8 +39,10 @@ class AirtableService {
           "Name": formData.name,
           "Email": formData.email,
           "Company": formData.company,
+          "Phone": formData.phone || null,
+          "Industry": formData.industry,
+          "Company Size": formData.companySize,
           "Primary Challenge": formData.challenge,
-          "Industry": formData.industry || "coaching",
           "Submission Date": new Date().toISOString(),
           "Pipeline Data": JSON.stringify(formData.pipelineData || {}),
           "User Journey": JSON.stringify(formData.userJourney || {})

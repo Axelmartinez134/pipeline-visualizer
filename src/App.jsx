@@ -153,12 +153,28 @@ function App() {
         
         <form id="leadForm" className="lead-form">
           <div className="form-row">
-            <input type="text" id="name" placeholder="Your Name" required />
-            <input type="text" id="company" placeholder="Company Name" required />
+            <input type="text" id="name" placeholder="Your Full Name" required />
+            <input type="text" id="company" placeholder="Your Company Name" required />
           </div>
           
           <div className="form-row">
-            <input type="email" id="email" placeholder="Email Address" required />
+            <input type="email" id="email" placeholder="Your Business Email" required />
+            <input type="tel" id="phone" placeholder="Phone (Optional - for strategy calls)" />
+          </div>
+
+          <div className="form-row">
+            <input type="text" id="industry" placeholder="Your Industry (e.g., Life Coaching, Marketing Agency, etc.)" required />
+            <select id="companySize" required>
+              <option value="">How many employees?</option>
+              <option value="solo">Just me (Solo)</option>
+              <option value="2-10">2-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="51-200">51-200 employees</option>
+              <option value="200+">200+ employees</option>
+            </select>
+          </div>
+          
+          <div className="form-row">
             <select id="challenge" required>
               <option value="">What's your biggest challenge?</option>
               <option value="lead-generation">Not enough leads</option>

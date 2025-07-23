@@ -318,8 +318,10 @@ export class UIController {
       name: document.getElementById('name')?.value?.trim() || '',
       email: document.getElementById('email')?.value?.trim() || '',
       company: document.getElementById('company')?.value?.trim() || '',
-      challenge: document.getElementById('challenge')?.value || '',
-      industry: document.getElementById('industrySelect')?.value || 'coaching'
+      phone: document.getElementById('phone')?.value?.trim() || '',
+      industry: document.getElementById('industry')?.value?.trim() || '',
+      companySize: document.getElementById('companySize')?.value || '',
+      challenge: document.getElementById('challenge')?.value || ''
     };
   }
 
@@ -327,9 +329,11 @@ export class UIController {
   validateFormData(formData) {
     const errors = [];
     
-    if (!formData.name) errors.push('Name is required');
-    if (!formData.email) errors.push('Email is required');
+    if (!formData.name) errors.push('Full name is required');
+    if (!formData.email) errors.push('Business email is required');
     if (!formData.company) errors.push('Company name is required');
+    if (!formData.industry) errors.push('Industry is required');
+    if (!formData.companySize) errors.push('Company size is required');
     if (!formData.challenge) errors.push('Please select your biggest challenge');
     
     // Basic email validation
