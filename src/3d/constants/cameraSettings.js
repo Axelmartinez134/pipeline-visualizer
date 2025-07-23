@@ -62,7 +62,7 @@ export const ARC_DETECTION = {
   enabled: true,
   closeUpThreshold: 5,          // Z distance that triggers arc transition
   minHorizontalDistance: 1.5,   // Minimum X distance to trigger arc
-  debugMode: true               // Enable console logging for debugging
+  debugMode: false              // Enable console logging for debugging
 };
 
 // Material colors
