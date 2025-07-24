@@ -5,6 +5,8 @@
 
 import { STAGE_CONFIG, PIPELINE_CONFIG, BUSINESS_METRICS } from '../constants/businessData.js';
 import { MATERIAL_COLORS } from '../constants/cameraSettings.js';
+import { DeviceDetection } from '../utils/deviceDetection.js';
+import SpriteText from 'three-spritetext';
 
 export class Pipeline {
   constructor(scene, businessData) {
@@ -14,8 +16,18 @@ export class Pipeline {
     this.pipes = [];
     this.waterFlows = [];
     this.connectors = [];
+    this.labels = []; // Store sprite text labels
     this.isSimulating = false;
     this.currentScenario = 'current';
+    
+    // Label names for each stage
+    this.stageLabels = {
+      leadGen: 'Marketing',
+      qualification: 'Sales',
+      onboarding: 'Onboarding',
+      delivery: 'Fulfillment',
+      retention: 'Retention'
+    };
     
     this.scene.add(this.pipelineGroup);
   }
@@ -76,12 +88,42 @@ export class Pipeline {
       this.pipelineGroup.add(pipe);
       this.pipes.push(pipe);
       
+      // Create sprite text label below the pipeline section
+      this.createStageLabel(stage, position);
+      
       // Create water flow if simulation is running
       if (this.isSimulating) {
         this.createWaterFlow(position, radius);
       }
     } catch (error) {
       console.error(`Error creating pipe stage ${stage}:`, error);
+    }
+  }
+
+  createStageLabel(stage, position) {
+    try {
+      // Create sprite text label
+      const label = new SpriteText(this.stageLabels[stage]);
+      
+      // Style the label optimized for distance viewing
+      // Use very high fontSize to maintain sharpness when viewed from far overview
+      label.color = '#1E3A8A'; // Brand blue color
+      label.textHeight = 0.4; // Visual size in 3D space  
+      label.fontSize = 300; // Much higher internal resolution for distance clarity
+      label.fontFace = 'Arial, sans-serif'; // Clean, readable font
+      label.fontWeight = 'bold'; // Make text bolder for better visibility
+      
+      // Position directly below the pipeline section
+      label.position.set(position, -1.5, 0); // 1.5 units below pipe center
+      
+      // Add to pipeline group and store reference
+      this.pipelineGroup.add(label);
+      this.labels.push(label);
+      
+      console.log(`Created distance-optimized label "${this.stageLabels[stage]}" with fontSize: 300`);
+      
+    } catch (error) {
+      console.error(`Error creating label for stage ${stage}:`, error);
     }
   }
 
@@ -173,9 +215,16 @@ export class Pipeline {
       if (element.material) element.material.dispose();
     });
     
+    // Remove and dispose labels
+    this.labels.forEach(label => {
+      this.pipelineGroup.remove(label);
+      if (label.dispose) label.dispose();
+    });
+    
     this.pipes = [];
     this.waterFlows = [];
     this.connectors = [];
+    this.labels = [];
   }
 
   updateStage(stage, value) {

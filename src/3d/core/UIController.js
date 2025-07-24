@@ -263,12 +263,12 @@ export class UIController {
       this.businessData.onboarding = 75;
       DOMHelpers.updateSliderValue('onboarding', 75);
       const slider = document.querySelector('input[onchange*="onboarding"]');
-      if (slider) slider.value = 75;
+      if (slider) slider.value = 75 - 10; // Convert to display value (65)
     } else if (scenario === 'current') {
       this.businessData.onboarding = 25;
       DOMHelpers.updateSliderValue('onboarding', 25);
       const slider = document.querySelector('input[onchange*="onboarding"]');
-      if (slider) slider.value = 25;
+      if (slider) slider.value = 25 - 10; // Convert to display value (15)
     }
     
     // Update metrics and content
@@ -442,7 +442,14 @@ export class UIController {
   // Initialize control values
   initializeControlValues() {
     STAGE_CONFIG.STAGES.forEach(stage => {
+      // Update display value (already handles conversion in DOMHelpers)
       DOMHelpers.updateSliderValue(stage, this.businessData[stage]);
+      
+      // Update slider position to match display value
+      const slider = document.querySelector(`input[onchange*="${stage}"]`);
+      if (slider) {
+        slider.value = this.businessData[stage] - 10; // Convert to display value
+      }
     });
     this.updateBottleneckAlert();
   }

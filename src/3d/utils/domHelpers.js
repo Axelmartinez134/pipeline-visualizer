@@ -52,7 +52,9 @@ export class DOMHelpers {
   static updateSliderValue(stage, value) {
     const valueDisplay = document.getElementById(stage + 'Value');
     if (valueDisplay) {
-      valueDisplay.textContent = value;
+      // Convert internal value (business logic) to display value (user sees value - 10)
+      const displayValue = parseInt(value) - 10;
+      valueDisplay.textContent = displayValue;
     }
   }
 

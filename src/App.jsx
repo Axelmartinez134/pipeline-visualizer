@@ -111,33 +111,43 @@ function App() {
 
         <div className="capacity-controls">
           <div className="slider-group">
-            <label>Marketing Leads/month:</label>
-            <span id="leadGenValue">120</span>
-            <input type="range" className="slider" min="50" max="300" defaultValue="120" onChange={(e) => window.updateStage && window.updateStage('leadGen', e.target.value)} />
+            <div className="slider-header">
+              <label>Marketing Leads/month:</label>
+              <span id="leadGenValue" className="slider-value">80</span>
+            </div>
+            <input type="range" className="slider" min="0" max="100" defaultValue="80" onChange={(e) => window.updateStage && window.updateStage('leadGen', parseInt(e.target.value) + 10)} />
           </div>
 
           <div className="slider-group">
-            <label>Sales Calls/month:</label>
-            <span id="qualificationValue">45</span>
-            <input type="range" className="slider" min="20" max="100" defaultValue="45" onChange={(e) => window.updateStage && window.updateStage('qualification', e.target.value)} />
+            <div className="slider-header">
+              <label>Sales Calls/month:</label>
+              <span id="qualificationValue" className="slider-value">35</span>
+            </div>
+            <input type="range" className="slider" min="0" max="100" defaultValue="35" onChange={(e) => window.updateStage && window.updateStage('qualification', parseInt(e.target.value) + 10)} />
           </div>
 
           <div className="slider-group">
-            <label>Onboarding Capacity/month:</label>
-            <span id="onboardingValue">25</span>
-            <input type="range" className="slider" min="10" max="80" defaultValue="25" onChange={(e) => window.updateStage && window.updateStage('onboarding', e.target.value)} />
+            <div className="slider-header">
+              <label>Onboarding Capacity/month:</label>
+              <span id="onboardingValue" className="slider-value">15</span>
+            </div>
+            <input type="range" className="slider" min="0" max="100" defaultValue="15" onChange={(e) => window.updateStage && window.updateStage('onboarding', parseInt(e.target.value) + 10)} />
           </div>
 
           <div className="slider-group">
-            <label>Service Delivery/month:</label>
-            <span id="deliveryValue">60</span>
-            <input type="range" className="slider" min="30" max="120" defaultValue="60" onChange={(e) => window.updateStage && window.updateStage('delivery', e.target.value)} />
+            <div className="slider-header">
+              <label>Service Delivery/month:</label>
+              <span id="deliveryValue" className="slider-value">50</span>
+            </div>
+            <input type="range" className="slider" min="0" max="100" defaultValue="50" onChange={(e) => window.updateStage && window.updateStage('delivery', parseInt(e.target.value) + 10)} />
           </div>
 
           <div className="slider-group">
-            <label>Retention Support/month:</label>
-            <span id="retentionValue">35</span>
-            <input type="range" className="slider" min="20" max="100" defaultValue="35" onChange={(e) => window.updateStage && window.updateStage('retention', e.target.value)} />
+            <div className="slider-header">
+              <label>Retention Support/month:</label>
+              <span id="retentionValue" className="slider-value">25</span>
+            </div>
+            <input type="range" className="slider" min="0" max="100" defaultValue="25" onChange={(e) => window.updateStage && window.updateStage('retention', parseInt(e.target.value) + 10)} />
           </div>
         </div>
 
