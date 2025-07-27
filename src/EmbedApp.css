@@ -1,14 +1,14 @@
 /* EmbedApp-specific styles optimized for iframe embedding */
 
-/* Body and root styling for iframe */
-body {
-    margin: 0;
-    padding: 0;
+/* Scoped styling for embed app only - doesn't affect main app */
+.embed-app-wrapper {
     background: white;
     font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    width: 100%;
 }
 
-.container {
+.embed-app-wrapper .container {
     max-width: 100%;
     margin: 0;
     padding: 10px;
@@ -17,8 +17,8 @@ body {
     box-sizing: border-box;
 }
 
-/* Tabs styling - preserved from original */
-.tabs {
+/* Tabs styling - scoped to embed app only */
+.embed-app-wrapper .tabs {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: auto auto auto;
@@ -31,16 +31,16 @@ body {
 }
 
 /* First row: Marketing, Sales, Onboarding (3 buttons, each span 2 columns) */
-.tab:nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
-.tab:nth-child(2) { grid-column: 3 / 5; grid-row: 1; }
-.tab:nth-child(3) { grid-column: 5 / 7; grid-row: 1; }
+.embed-app-wrapper .tab:nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
+.embed-app-wrapper .tab:nth-child(2) { grid-column: 3 / 5; grid-row: 1; }
+.embed-app-wrapper .tab:nth-child(3) { grid-column: 5 / 7; grid-row: 1; }
 
 /* Second row: Fulfillment, Retention (2 buttons, centered with gaps) */
-.tab:nth-child(4) { grid-column: 2 / 4; grid-row: 2; }
-.tab:nth-child(5) { grid-column: 4 / 6; grid-row: 2; }
+.embed-app-wrapper .tab:nth-child(4) { grid-column: 2 / 4; grid-row: 2; }
+.embed-app-wrapper .tab:nth-child(5) { grid-column: 4 / 6; grid-row: 2; }
 
 /* Third row: Overview (1 small button, centered) */
-.tab-overview {
+.embed-app-wrapper .tab-overview {
     grid-column: 3 / 5; 
     grid-row: 3;
     padding: 10px 16px !important;
@@ -48,7 +48,7 @@ body {
     justify-self: center;
 }
 
-.tab {
+.embed-app-wrapper .tab {
     padding: 10px 16px;
     background: linear-gradient(45deg, #1E3A8A, #374151);
     color: white;
@@ -62,12 +62,12 @@ body {
     text-align: center;
 }
 
-.tab:hover {
+.embed-app-wrapper .tab:hover {
     background: linear-gradient(45deg, #2563EB, #4B5563);
     transform: translateY(-2px);
 }
 
-.tab.active {
+.embed-app-wrapper .tab.active {
     background: #1E3A8A;
     color: white;
     border-color: #1E3A8A;
@@ -139,8 +139,8 @@ body {
     pointer-events: none;
 }
 
-.top-overlay {
-    top: -5px;
+.embed-app-wrapper .top-overlay {
+    top: 100px !important;
 }
 
 .bottom-overlay {
@@ -246,7 +246,7 @@ body {
 }
 
 /* Arc Transition Visual Feedback */
-.tab.transitioning {
+.embed-app-wrapper .tab.transitioning {
     opacity: 0.7;
     pointer-events: none;
     background: linear-gradient(45deg, #1E3A8A, #374151);
@@ -254,7 +254,7 @@ body {
     position: relative;
 }
 
-.tab.transitioning::after {
+.embed-app-wrapper .tab.transitioning::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -412,7 +412,7 @@ body {
 }
 
 /* Prevent rapid clicking on all tabs during transition */
-.pipeline-container.arc-transitioning + .tabs .tab:not(.transitioning) {
+.embed-app-wrapper .pipeline-container.arc-transitioning + .tabs .tab:not(.transitioning) {
     opacity: 0.6;
     pointer-events: none;
 } 
