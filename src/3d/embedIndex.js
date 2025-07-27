@@ -51,7 +51,7 @@ async function initializeEmbedPipeline() {
             content.innerHTML = `
               <span class="educational-text">
                 <strong style="font-size: 1.1rem; color: #1E3A8A; display: block; margin-bottom: 8px;">Our Service Offerings</strong>
-                <span style="font-size: 0.95rem; line-height: 1.4;">Our AI automation portfolio combines productized solutions and custom development to expand capacity in each critical business process. <strong>Click any area to explore our services that eliminate bottlenecks and scale revenue.</strong></span>
+                <span style="font-size: 0.95rem; line-height: 1.4;"><strong>Click any area to explore our services that eliminate bottlenecks and scale revenue.</strong></span>
               </span>
             `;
           }
