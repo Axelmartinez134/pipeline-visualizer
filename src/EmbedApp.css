@@ -323,17 +323,17 @@ body {
     
     .pipeline-container {
         padding: 12px;
-        min-height: 350px;
+        min-height: 400px;
     }
     
     .pipeline-container canvas {
-        height: 350px !important;
-        max-height: 350px;
+        height: 400px !important;
+        max-height: 400px;
     }
     
     #pipelineCanvas {
-        height: 350px !important;
-        max-height: 350px;
+        height: 400px !important;
+        max-height: 400px;
     }
     
     .educational-overlay {
@@ -347,7 +347,7 @@ body {
     }
     
     .bottom-overlay {
-        top: 260px;
+        top: 300px;
     }
     
     .pipeline-container.arc-transitioning::before {
@@ -389,17 +389,17 @@ body {
     
     .pipeline-container {
         padding: 10px;
-        min-height: 320px;
+        min-height: 400px;
     }
     
     .pipeline-container canvas {
-        height: 320px !important;
-        max-height: 320px;
+        height: 400px !important;
+        max-height: 400px;
     }
     
     #pipelineCanvas {
-        height: 320px !important;
-        max-height: 320px;
+        height: 400px !important;
+        max-height: 400px;
     }
     
     .educational-overlay {
@@ -408,7 +408,7 @@ body {
     }
     
     .bottom-overlay {
-        top: 240px;
+        top: 300px;
     }
 }
 
