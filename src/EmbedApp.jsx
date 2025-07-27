@@ -114,6 +114,10 @@ function EmbedApp() {
           </div>
         </div>
       </div>
+
+      <div id="processAnalysis" className="analysis-section">
+        <div id="analysisContent"></div>
+      </div>
     </div>
   )
 }

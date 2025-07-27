@@ -102,7 +102,10 @@ export class ThoughtBubbles {
     vector.project(this.camera);
     
     const x = (vector.x * 0.5 + 0.5) * containerElement.clientWidth;
-    let y = (-(vector.y * 0.5) + 0.5) * containerElement.clientHeight;
+    // Fix: Use canvas height (400px) instead of container height (440px with padding)
+    const canvasHeight = 400; // Actual canvas height without container padding
+    const containerPadding = 20; // Top padding offset
+    let y = (-(vector.y * 0.5) + 0.5) * canvasHeight + containerPadding;
     
     // Mobile-specific positioning logic
     if (DeviceDetection.isMobile()) {
@@ -110,18 +113,9 @@ export class ThoughtBubbles {
       const isZoomedIn = distance < 6; // Detect zoom-in state
       
       if (isZoomedIn) {
-        // FIXED: Correct positioning between viewport top and pipe graphics
-        // When zoomed in, camera is at y: -2.4 looking up at y: 2.5
-        // Pipeline at y: 0 projects to upper portion of screen (~30-40% down)
-        const viewportTop = 0;
-        const pipeGraphicsStart = containerElement.clientHeight * 0.35; // Pipeline appears ~35% down (140px in 400px canvas)
-        const centerPosition = (viewportTop + pipeGraphicsStart) / 2; // ~70px from top
-        
-        // Use center position for text box
-        y = centerPosition;
-        
-        // Small offset for fine positioning
-        const mobileOffset = 10; // Minimal offset for true center positioning  
+        // Now that base y calculation is correct, use simpler mobile positioning
+        // Small offset for fine positioning on mobile zoom-in
+        const mobileOffset = 10; 
         bubbleData.element.style.top = `${Math.max(15, y - mobileOffset)}px`;
         
         // Increased height constraint for mobile
