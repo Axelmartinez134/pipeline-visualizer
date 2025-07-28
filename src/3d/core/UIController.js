@@ -82,11 +82,22 @@ export class UIController {
 
   // Process tab selection with transition throttling
   selectProcess(processId) {
-    // Complete tutorial if on step 4 and tutorial is active
-    if (this.tutorialState.isActive && this.tutorialState.currentStep === 4) {
-      console.log('🎉 TAB CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
-      this.completeTutorial();
-      // Continue with normal tab selection after completing tutorial
+    // Handle tutorial behavior based on step and selected process
+    if (this.tutorialState.isActive && !this.tutorialState.completed) {
+      if (this.tutorialState.currentStep === 4) {
+        // Step 5 (final step): Complete tutorial on any tab click
+        console.log('🎉 TAB CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
+        this.completeTutorial();
+      } else if (processId !== 'overview') {
+        // Steps 1-4: Hide tutorial overlays when navigating away from overview
+        console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Hiding overlays for ${processId} navigation`);
+        this.hideEducationalOverlays();
+             } else {
+         // Returning to overview: Show tutorial overlays at same step
+         console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Returning to overview, showing overlays`);
+         this.updateTutorialOverlays(); // Ensure tutorial content is displayed
+         this.showEducationalOverlays();
+       }
     }
     
     // Prevent rapid clicking and transition conflicts
@@ -304,7 +315,7 @@ export class UIController {
 
   // Switch between current and optimized scenarios
   switchScenario(scenario) {
-    // Complete tutorial if on step 4 and tutorial is active
+    // Complete tutorial if on step 4 and tutorial is active (final step only)
     if (this.tutorialState.isActive && this.tutorialState.currentStep === 4) {
       console.log('🎉 SCENARIO TOGGLE CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
       this.completeTutorial();
