@@ -64,7 +64,16 @@ export class PipelineRenderer {
   }
 
   exposeGlobalFunctions() {
-    // No longer expose global functions; UI should interact via context/store
+    // Provide safe legacy fallbacks for UI actions in case context isn't ready
+    const ui = this.uiController;
+    if (!ui) return;
+    window.selectProcessTab = (id) => ui.selectProcess?.(id);
+    window.resetCamera = () => ui.resetCamera?.();
+    window.updateStage = (stage, value) => ui.updateStage?.(stage, value);
+    window.toggleSimulation = () => ui.toggleSimulation?.();
+    window.switchScenario = (s) => ui.switchScenario?.(s);
+    window.updateIndustry = (industry) => ui.updateIndustry?.(industry);
+    window.submitLeadForm = () => ui.submitLeadForm?.();
   }
 
   addArcTransitionTestFunction() {

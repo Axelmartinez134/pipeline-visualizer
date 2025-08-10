@@ -20,6 +20,13 @@ async function initializePipeline() {
     pipelineRenderer = new PipelineRenderer();
     await pipelineRenderer.init();
     
+    // Ensure the global reference points to the initialized renderer
+    window.PipelineVisualization = {
+      renderer: pipelineRenderer,
+      initialize: initializePipeline,
+      dispose: disposePipeline
+    };
+    
   } catch (error) {
     console.error('Failed to initialize pipeline:', error);
   }
@@ -33,6 +40,10 @@ function disposePipeline() {
     pipelineRenderer.dispose();
     pipelineRenderer = null;
   }
+  // Keep global API but clear renderer reference
+  if (window.PipelineVisualization) {
+    window.PipelineVisualization.renderer = null;
+  }
 }
 
 // Auto-initialize when script loads (React handles DOM readiness)
@@ -41,9 +52,4 @@ initializePipeline();
 // Export for potential external use
 export { pipelineRenderer, initializePipeline, disposePipeline };
 
-// Also expose globally for debugging
-window.PipelineVisualization = {
-  renderer: pipelineRenderer,
-  initialize: initializePipeline,
-  dispose: disposePipeline
-}; 
+// Global will be assigned in initializePipeline()

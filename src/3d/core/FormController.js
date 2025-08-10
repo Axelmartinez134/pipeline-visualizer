@@ -92,6 +92,10 @@ export class FormController {
         </div>
       `;
     }
+    // Notify React/UI via event so status persists across re-renders
+    try {
+      window.dispatchEvent(new CustomEvent('leadForm:status', { detail: { type: 'success' } }));
+    } catch {}
     setTimeout(() => {
       document.getElementById('leadForm')?.reset();
       if (statusElement) statusElement.innerHTML = '';
@@ -118,6 +122,10 @@ export class FormController {
         if (statusElement) statusElement.innerHTML = '';
       }, 7000);
     }
+    // Notify React/UI via event so status persists across re-renders
+    try {
+      window.dispatchEvent(new CustomEvent('leadForm:status', { detail: { type: 'error', message } }));
+    } catch {}
   }
 }
 

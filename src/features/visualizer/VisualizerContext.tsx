@@ -12,7 +12,7 @@ export type VisualizerApi = {
   zoomOut: () => void;
   resetZoom: () => void;
   updateIndustry: (industry: string) => void;
-  submitLeadForm: () => void;
+  submitLeadForm: () => void | Promise<void>;
 };
 
 const noop = () => {};
@@ -97,12 +97,40 @@ export function VisualizerProvider({ children }: { children: React.ReactNode }) 
         if (typeof fn === 'function') fn(industry);
       }
     },
-    submitLeadForm: () => {
-      const ui = (window as any).PipelineVisualization?.renderer?.uiController;
-      if (ui?.submitLeadForm) ui.submitLeadForm();
-      else {
-        const fn = (window as any).submitLeadForm;
-        if (typeof fn === 'function') fn();
+    submitLeadForm: async () => {
+      // Try immediate window path first
+      let ui = (window as any).PipelineVisualization?.renderer?.uiController;
+
+      // If not ready, try importing module export and retry a few times
+      if (!ui) {
+        try {
+          const mod = await import('../../3d/index.js');
+          const renderer = (mod as any).pipelineRenderer || (window as any).PipelineVisualization?.renderer;
+          ui = renderer?.uiController;
+        } catch {}
+      }
+
+      // Brief retry loop in case initialization finishes shortly after click
+      if (!ui) {
+        for (let i = 0; i < 5; i++) {
+          await new Promise(res => setTimeout(res, 150));
+          ui = (window as any).PipelineVisualization?.renderer?.uiController;
+          if (ui) break;
+        }
+      }
+
+      if (ui?.submitLeadForm) {
+        await ui.submitLeadForm();
+        return;
+      }
+
+      // Fallback to legacy global if present
+      const fn = (window as any).submitLeadForm;
+      if (typeof fn === 'function') {
+        fn();
+      } else {
+        // As a last resort, inform in console; UI will remain unchanged
+        console.warn('submitLeadForm: UI controller not ready');
       }
     },
   }), []);

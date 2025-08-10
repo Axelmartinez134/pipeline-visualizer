@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import PipelineVisualizer from './features/visualizer/PipelineVisualizer.tsx'
 import { VisualizerProvider, useVisualizer } from './features/visualizer/VisualizerContext.tsx'
@@ -58,6 +58,17 @@ function App() {
       }
     }
   }, [])
+
+  // Debug and native fallback click listener for submit button
+  useEffect(() => {
+    const button = document.getElementById('submitBtn');
+    if (!button) return;
+    const onNativeClick = () => {
+      console.log('[LeadForm] Native click detected');
+    };
+    button.addEventListener('click', onNativeClick);
+    return () => button.removeEventListener('click', onNativeClick);
+  }, []);
 
   return (
     <VisualizerProvider>
@@ -175,26 +186,7 @@ function App() {
           
           <div id="formStatus"></div>
           
-          <button 
-            type="button" 
-            id="submitBtn"
-            onClick={useVisualizer().submitLeadForm}
-            style={{
-              background: 'linear-gradient(45deg, #1E3A8A, #374151)', 
-              color: 'white', 
-              border: 'none', 
-              padding: '15px 30px', 
-              borderRadius: '25px', 
-              fontSize: '16px', 
-              fontWeight: 'bold', 
-              marginTop: '20px', 
-              cursor: 'pointer', 
-              width: '100%',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            Get My Automation Strategy
-          </button>
+          <SubmitButton />
         </form>
       </div>
     </div>
@@ -266,4 +258,46 @@ function TabsRow() {
       <div className="tab tab-overview" onClick={() => v.selectProcess('overview')}>Overview</div>
     </>
   )
+}
+
+function SubmitButton() {
+  const v = useVisualizer();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState(null);
+  return (
+    <button 
+      type="button" 
+      id="submitBtn"
+      onClick={async () => {
+        console.log('[LeadForm] React onClick fired');
+        try {
+          setIsSubmitting(true);
+          setStatus(null);
+          await v.submitLeadForm();
+          setStatus('success');
+        } catch (e) {
+          setStatus('error');
+        } finally {
+          setIsSubmitting(false);
+        }
+      }}
+      style={{
+        background: 'linear-gradient(45deg, #1E3A8A, #374151)', 
+        color: 'white', 
+        border: 'none', 
+        padding: '15px 30px', 
+        borderRadius: '25px', 
+        fontSize: '16px', 
+        fontWeight: 'bold', 
+        marginTop: '20px', 
+        cursor: 'pointer', 
+        width: '100%',
+        transition: 'all 0.3s ease',
+        opacity: isSubmitting ? 0.7 : 1
+      }}
+      disabled={isSubmitting}
+    >
+      {isSubmitting ? '⏳ Submitting...' : 'Get My Automation Strategy'}
+    </button>
+  );
 }
