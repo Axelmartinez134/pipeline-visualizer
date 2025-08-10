@@ -40,7 +40,10 @@ src/3d/
 ├── core/               # Core orchestration logic
 │   ├── PipelineRenderer.js # Main orchestrator and entry point
 │   ├── SceneManager.js     # 3D scene coordination
-│   └── UIController.js     # UI interactions and business logic
+│   ├── UIController.js     # UI interactions and business logic (delegates to managers)
+│   ├── OverlayManager.js   # Educational overlays show/hide/update
+│   ├── FormController.js   # Lead form collection/validation/submission and UI state
+│   └── TutorialManager.js  # Tutorial state, overlays, and highlight behaviors
 ├── index.js            # Main entry point
 └── ARCHITECTURE.md     # This documentation file
 ```
@@ -125,16 +128,28 @@ src/3d/
 - Performance quality adaptation
 
 **UIController.js**
-- Business logic and UI interactions
-- Form validation and submission
+- Business logic and UI interactions (delegates to managers below)
 - Metrics calculation and display
-- Process content management
+- Process content management (analysis panel now React-rendered outside 3D)
+
+**OverlayManager.js**
+- Encapsulates educational overlay DOM updates and visibility
+- Updates bottleneck text and triangle placement; shows/hides overlays
+
+**FormController.js**
+- Lead form data collection and validation
+- Airtable submission (via `services/airtableService.js`)
+- Loading/success/error UI handling
+
+**TutorialManager.js**
+- Tutorial steps, overlays, and highlight effects (tabs, sliders, pipeline)
+- Completes tutorial and switches to normal overlays
 
 **PipelineRenderer.js**
 - Main orchestrator class
 - Initialization sequencing
-- Global function exposure
 - Component lifecycle management
+- UI no longer depends on `window.*` globals; React context calls controller/camera directly
 
 ## 🔧 How It Works
 
@@ -236,9 +251,13 @@ This modular architecture creates a foundation for:
 ## 🔗 Integration Points
 
 ### With React App (`src/App.jsx`)
-- Global functions exposed for onclick handlers
-- Canvas element integration maintained
-- Error overlay integration preserved
+- Uses a reusable wrapper component `PipelineVisualizer.tsx` to create the canvas/overlays and run init/dispose
+- Interactions go through `VisualizerProvider`/`useVisualizer` (context shim) which calls `uiController`/camera directly
+- No reliance on `window.*` UI globals (legacy exposure removed)
+- Process analysis panel is React-rendered via `features/visualizer/ProcessAnalysis.jsx`
+
+### With Embed App (`src/EmbedApp.jsx`)
+- Same `PipelineVisualizer` and context wiring with `variant="embed"` (uses embed data/content)
 
 ### With CSS Styles
 - Maintains existing CSS class structure
@@ -258,3 +277,47 @@ This modular architecture creates a foundation for:
 ---
 
 This architecture successfully transforms the monolithic pipeline visualization into a maintainable, scalable, and mobile-first 3D web application foundation. 
+
+---
+
+## Recent Refactor and Tooling Updates (August 2025)
+
+### React Integration Layer (outside `src/3d`)
+
+```
+src/
+├── features/visualizer/
+│   ├── PipelineVisualizer.tsx      # Thin React wrapper; mounts canvas/overlays and runs init/dispose
+│   ├── VisualizerContext.tsx       # Context provider + hook to call uiController/camera (no window globals)
+│   └── ProcessAnalysis.jsx         # React-rendered analysis panel (replaces innerHTML)
+├── esmSetup.js                     # ESM import unifier; attaches window.THREE/window.gsap for legacy code
+```
+
+Key changes:
+- Removed CDN `<script>` tags; `three` and `gsap` are imported via ESM; `esmSetup.js` assigns globals for legacy 3D code paths.
+- `App.jsx` and `EmbedApp.jsx` now wrap content in `VisualizerProvider` and use `useVisualizer()` for tabs, sliders, zoom, scenario, industry, and form submit.
+- `ProcessAnalysis.jsx` replaced DOM `innerHTML` in `UIController` for the analysis content.
+
+### Controller/Manager split
+- `UIController` delegates to:
+  - `OverlayManager` for educational overlays
+  - `FormController` for lead form logic
+  - `TutorialManager` for tutorial overlays/highlights
+- This reduces `UIController` surface area and isolates concerns for future testing.
+
+### Removal of global UI functions
+- `PipelineRenderer.exposeGlobalFunctions()` no longer assigns `window.selectProcessTab`, `window.updateStage`, etc.
+- React context/hook (`VisualizerContext`) calls `uiController` and `sceneManager.camera` directly.
+
+### Error handling fix
+- `ErrorHandler` now imports `CAMERA_POSITIONS` for fallback transitions instead of referencing `camera.constructor.CAMERA_POSITIONS`.
+
+### Testing & DX
+- Vitest configured (`vitest.config.ts`) with a basic smoke test for the 3D entry point.
+- ESLint (flat config) + Prettier added; scripts: `typecheck`, `lint`, `test`, `format`.
+- ESLint configured with browser globals (`THREE`, `gsap`, `fetch`, etc.) to avoid false positives for runtime-only APIs.
+
+### Notes for future development
+- The context layer currently shims to legacy globals only as a fallback; the project now runs without them. New UI should call the context (or a dedicated store) directly.
+- Consider migrating 3D modules to import `THREE`/`gsap` directly to remove the need for `esmSetup.js` globals.
+- Expand tests around camera transitions and pipeline updates; wire `ProcessAnalysis` to selected process from a store for live updates.

@@ -64,48 +64,7 @@ export class PipelineRenderer {
   }
 
   exposeGlobalFunctions() {
-    // Expose UI controller methods globally for HTML onclick handlers
-    window.selectProcessTab = (processId) => {
-      if (this.uiController) {
-        this.uiController.selectProcess(processId);
-      }
-    };
-    
-    window.resetCamera = () => {
-      if (this.uiController) {
-        this.uiController.resetCamera();
-      }
-    };
-    
-    window.updateStage = (stage, value) => {
-      if (this.uiController) {
-        this.uiController.updateStage(stage, value);
-      }
-    };
-    
-    window.toggleSimulation = () => {
-      if (this.uiController) {
-        this.uiController.toggleSimulation();
-      }
-    };
-    
-    window.switchScenario = (scenario) => {
-      if (this.uiController) {
-        this.uiController.switchScenario(scenario);
-      }
-    };
-    
-    window.updateIndustry = (industry) => {
-      if (this.uiController) {
-        this.uiController.updateIndustry(industry);
-      }
-    };
-    
-    window.submitLeadForm = () => {
-      if (this.uiController) {
-        this.uiController.submitLeadForm();
-      }
-    };
+    // No longer expose global functions; UI should interact via context/store
   }
 
   addArcTransitionTestFunction() {

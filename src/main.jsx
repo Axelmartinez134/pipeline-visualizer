@@ -2,6 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import EmbedApp from './EmbedApp.jsx'
+// Ensure ESM libs are set up (provides window.THREE/window.gsap for legacy code)
+import './esmSetup.js'
 import './index.css'
 
 // Simple URL routing without React Router

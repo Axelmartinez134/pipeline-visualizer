@@ -592,6 +592,40 @@
     box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4);
 }
 
+.zoom-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.zoom-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #1E3A8A, #374151);
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+}
+
+.zoom-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.4);
+  background: linear-gradient(45deg, #2563EB, #4B5563);
+}
+
+.zoom-btn:active {
+  transform: scale(0.95);
+}
+
 .scenario-toggle {
     display: flex;
     gap: 10px;
@@ -822,8 +856,19 @@
         flex-direction: column;
     }
     
+    .zoom-controls {
+        order: 2; /* Place zoom controls between play button and scenario toggle */
+    }
+    
+    .zoom-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
     .scenario-toggle {
         width: 100%;
         justify-content: center;
+        order: 3; /* Place scenario toggle last */
     }
 } 

@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import './EmbedApp.css'
+import PipelineVisualizer from './features/visualizer/PipelineVisualizer.tsx'
+import { VisualizerProvider, useVisualizer } from './features/visualizer/VisualizerContext.tsx'
 
 function EmbedApp() {
   useEffect(() => {
@@ -57,6 +59,7 @@ function EmbedApp() {
   }, [])
 
   return (
+    <VisualizerProvider>
     <div className="container">
       {/* Hidden elements required by 3D pipeline system but not used in embed */}
       <div style={{ display: 'none' }}>
@@ -82,44 +85,31 @@ function EmbedApp() {
       </div>
 
       <div className="tabs">
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('leadGen')}>Marketing</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('qualification')}>Sales</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('onboarding')}>Onboarding</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('delivery')}>Fulfillment</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('retention')}>Retention</div>
-        <div className="tab tab-overview" onClick={() => window.selectProcessTab && window.selectProcessTab('overview')}>Overview</div>
+        <TabsRow />
       </div>
 
-      <div className="pipeline-container">
-        <div id="loadingOverlay" className="loading-overlay">
-          🚀 Initializing 3D Pipeline...
-        </div>
-
-        {/* Educational Text Overlays - Only show on Overview */}
-        <div id="educationalTopOverlay" className="educational-overlay top-overlay hidden">
-          <div className="educational-content">
-            <span className="educational-text">
-              Our AI automation portfolio combines productized solutions and custom development to expand capacity in each critical business process. <strong>Click any area to explore our services that eliminate bottlenecks and scale revenue.</strong>
-            </span>
-          </div>
-        </div>
-
-        <canvas id="pipelineCanvas"></canvas>
-
-        <div id="educationalBottomOverlay" className="educational-overlay bottom-overlay hidden">
-          <div className="educational-content">
-            <div className="educational-cta">
-              <strong>Explore each process area above, then discover your actual bottleneck with our proven assessment. We'll show you the exact automation solution to break through it.</strong> <a href="/" style={{color: '#1E3A8A', textDecoration: 'underline', fontWeight: 'bold'}}>Find Your Constraint →</a>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PipelineVisualizer variant="embed" />
 
       <div id="processAnalysis" className="analysis-section">
         <div id="analysisContent"></div>
       </div>
     </div>
+    </VisualizerProvider>
   )
 }
 
 export default EmbedApp 
+
+function TabsRow() {
+  const v = useVisualizer();
+  return (
+    <>
+      <div className="tab" onClick={() => v.selectProcess('leadGen')}>Marketing</div>
+      <div className="tab" onClick={() => v.selectProcess('qualification')}>Sales</div>
+      <div className="tab" onClick={() => v.selectProcess('onboarding')}>Onboarding</div>
+      <div className="tab" onClick={() => v.selectProcess('delivery')}>Fulfillment</div>
+      <div className="tab" onClick={() => v.selectProcess('retention')}>Retention</div>
+      <div className="tab tab-overview" onClick={() => v.selectProcess('overview')}>Overview</div>
+    </>
+  )
+}

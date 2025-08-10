@@ -1,5 +1,8 @@
 import { useEffect } from 'react'
 import './App.css'
+import PipelineVisualizer from './features/visualizer/PipelineVisualizer.tsx'
+import { VisualizerProvider, useVisualizer } from './features/visualizer/VisualizerContext.tsx'
+import ProcessAnalysis from './features/visualizer/ProcessAnalysis.jsx'
 
 function App() {
   useEffect(() => {
@@ -57,6 +60,7 @@ function App() {
   }, [])
 
   return (
+    <VisualizerProvider>
     <div className="container">
       <div className="header">
         <h1>🤖 AutomatedBots Pipeline Analyzer</h1>
@@ -64,58 +68,22 @@ function App() {
         
         <div className="industry-selector">
           <label htmlFor="industrySelect">Industry:</label>
-          <select id="industrySelect" className="industry-dropdown" onChange={(e) => window.updateIndustry && window.updateIndustry(e.target.value)}>
-            <option value="coaching">Coaching Business</option>
-            <option value="consulting" disabled>Consulting (Coming Soon)</option>
-            <option value="ecommerce" disabled>E-commerce (Coming Soon)</option>
-            <option value="saas" disabled>SaaS (Coming Soon)</option>
-          </select>
+          <IndustrySelect />
         </div>
       </div>
 
       <div className="tabs">
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('leadGen')}>Marketing</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('qualification')}>Sales</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('onboarding')}>Onboarding</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('delivery')}>Fulfillment</div>
-        <div className="tab" onClick={() => window.selectProcessTab && window.selectProcessTab('retention')}>Retention</div>
-        <div className="tab tab-overview" onClick={() => window.selectProcessTab && window.selectProcessTab('overview')}>Overview</div>
+        <TabsRow />
       </div>
 
-      <div className="pipeline-container">
-        <div id="loadingOverlay" className="loading-overlay">
-          🚀 Initializing 3D Pipeline...
-        </div>
-
-        {/* Educational Text Overlays - Only show on Overview */}
-        <div id="educationalTopOverlay" className="educational-overlay top-overlay hidden">
-          <div className="educational-content">
-            <span className="educational-text">
-              This is <strong>Theory of Constraints</strong> applied to your <strong id="businessTypeText">Coaching</strong> business
-            </span>
-          </div>
-        </div>
-
-        <canvas id="pipelineCanvas"></canvas>
-
-        <div id="educationalBottomOverlay" className="educational-overlay bottom-overlay hidden">
-          <div className="educational-content">
-            <div className="constraint-indicator">
-              👆 <strong id="constraintStageText">Onboarding</strong> is your bottleneck limiting you to <strong id="constraintRevenueText">$75,000</strong> ARR
-            </div>
-            <div className="educational-cta">
-              <strong>Click the tabs above to explore automation solutions</strong>
-            </div>
-          </div>
-        </div>
-
+      <PipelineVisualizer>
         <div className="capacity-controls">
           <div className="slider-group">
             <div className="slider-header">
               <label>Marketing Leads/month:</label>
               <span id="leadGenValue" className="slider-value">80</span>
             </div>
-            <input type="range" className="slider" min="0" max="100" defaultValue="80" onChange={(e) => window.updateStage && window.updateStage('leadGen', parseInt(e.target.value) + 10)} />
+            <StageSlider stage="leadGen" defaultValue={80} />
           </div>
 
           <div className="slider-group">
@@ -123,7 +91,7 @@ function App() {
               <label>Sales Calls/month:</label>
               <span id="qualificationValue" className="slider-value">35</span>
             </div>
-            <input type="range" className="slider" min="0" max="100" defaultValue="35" onChange={(e) => window.updateStage && window.updateStage('qualification', parseInt(e.target.value) + 10)} />
+            <StageSlider stage="qualification" defaultValue={35} />
           </div>
 
           <div className="slider-group">
@@ -131,7 +99,7 @@ function App() {
               <label>Onboarding Capacity/month:</label>
               <span id="onboardingValue" className="slider-value">15</span>
             </div>
-            <input type="range" className="slider" min="0" max="100" defaultValue="15" onChange={(e) => window.updateStage && window.updateStage('onboarding', parseInt(e.target.value) + 10)} />
+            <StageSlider stage="onboarding" defaultValue={15} />
           </div>
 
           <div className="slider-group">
@@ -139,7 +107,7 @@ function App() {
               <label>Service Delivery/month:</label>
               <span id="deliveryValue" className="slider-value">50</span>
             </div>
-            <input type="range" className="slider" min="0" max="100" defaultValue="50" onChange={(e) => window.updateStage && window.updateStage('delivery', parseInt(e.target.value) + 10)} />
+            <StageSlider stage="delivery" defaultValue={50} />
           </div>
 
           <div className="slider-group">
@@ -147,36 +115,23 @@ function App() {
               <label>Retention Support/month:</label>
               <span id="retentionValue" className="slider-value">25</span>
             </div>
-            <input type="range" className="slider" min="0" max="100" defaultValue="25" onChange={(e) => window.updateStage && window.updateStage('retention', parseInt(e.target.value) + 10)} />
+            <StageSlider stage="retention" defaultValue={25} />
           </div>
         </div>
-
         <div className="simulation-controls">
-          <button className="play-button" onClick={() => window.toggleSimulation && window.toggleSimulation()}>▶</button>
+          <PlayPause />
+          
+          <div className="zoom-controls">
+            <ZoomButtons />
+          </div>
+          
           <div className="scenario-toggle">
-            <button className="toggle-btn active" onClick={() => window.switchScenario && window.switchScenario('current')}>Current State</button>
-            <button className="toggle-btn" onClick={() => window.switchScenario && window.switchScenario('optimized')}>After Automation</button>
+            <ScenarioToggle />
           </div>
         </div>
-      </div>
+      </PipelineVisualizer>
 
-      <div id="processAnalysis" className="analysis-section">
-        <h3>Process Analysis</h3>
-        <div id="analysisContent">
-          <p>Welcome to the AutomatedBots Pipeline Analyzer! This interactive tool helps you visualize your coaching business processes and identify automation opportunities.</p>
-          
-          <h4>🎯 How It Works:</h4>
-          <ul>
-            <li><strong>Adjust Sliders:</strong> Set your current monthly capacities for each stage</li>
-            <li><strong>Explore Sections:</strong> Click the tabs above to dive into specific areas</li>
-            <li><strong>Identify Bottlenecks:</strong> Watch for red sections indicating constraints</li>
-            <li><strong>See Improvements:</strong> Toggle between Current State and After Automation</li>
-          </ul>
-          
-          <h4>🚀 Get Started:</h4>
-          <p>Click on any process tab (Marketing, Sales, Onboarding, Fulfillment, Retention) to see specific automation recommendations for that area.</p>
-        </div>
-      </div>
+      <ProcessAnalysis selectedProcess="overview" />
 
       <div className="lead-capture">
         <h3>Ready to Automate Your Pipeline?</h3>
@@ -223,7 +178,7 @@ function App() {
           <button 
             type="button" 
             id="submitBtn"
-            onClick={() => window.submitLeadForm && window.submitLeadForm()}
+            onClick={useVisualizer().submitLeadForm}
             style={{
               background: 'linear-gradient(45deg, #1E3A8A, #374151)', 
               color: 'white', 
@@ -243,7 +198,72 @@ function App() {
         </form>
       </div>
     </div>
+    </VisualizerProvider>
   )
 }
 
 export default App 
+
+function StageSlider({ stage, defaultValue }) {
+  const v = useVisualizer();
+  return (
+    <input 
+      type="range" className="slider" min="0" max="100" defaultValue={defaultValue}
+      onChange={(e) => v.updateStage(stage, parseInt(e.target.value) + 10)}
+    />
+  );
+}
+
+function PlayPause() {
+  const v = useVisualizer();
+  return (
+    <button className="play-button" onClick={() => v.toggleSimulation()}>▶</button>
+  )
+}
+
+function ZoomButtons() {
+  const v = useVisualizer();
+  return (
+    <>
+      <button className="zoom-btn" onClick={() => v.zoomOut()} title="Zoom Out">🔍-</button>
+      <button className="zoom-btn" onClick={() => v.resetZoom()} title="Reset Zoom">⌂</button>
+      <button className="zoom-btn" onClick={() => v.zoomIn()} title="Zoom In">🔍+</button>
+    </>
+  )
+}
+
+function ScenarioToggle() {
+  const v = useVisualizer();
+  return (
+    <>
+      <button className="toggle-btn active" onClick={() => v.switchScenario('current')}>Current State</button>
+      <button className="toggle-btn" onClick={() => v.switchScenario('optimized')}>After Automation</button>
+    </>
+  )
+}
+
+function IndustrySelect() {
+  const v = useVisualizer();
+  return (
+    <select id="industrySelect" className="industry-dropdown" onChange={(e) => v.updateIndustry(e.target.value)}>
+      <option value="coaching">Coaching Business</option>
+      <option value="consulting" disabled>Consulting (Coming Soon)</option>
+      <option value="ecommerce" disabled>E-commerce (Coming Soon)</option>
+      <option value="saas" disabled>SaaS (Coming Soon)</option>
+    </select>
+  )
+}
+
+function TabsRow() {
+  const v = useVisualizer();
+  return (
+    <>
+      <div className="tab" onClick={() => v.selectProcess('leadGen')}>Marketing</div>
+      <div className="tab" onClick={() => v.selectProcess('qualification')}>Sales</div>
+      <div className="tab" onClick={() => v.selectProcess('onboarding')}>Onboarding</div>
+      <div className="tab" onClick={() => v.selectProcess('delivery')}>Fulfillment</div>
+      <div className="tab" onClick={() => v.selectProcess('retention')}>Retention</div>
+      <div className="tab tab-overview" onClick={() => v.selectProcess('overview')}>Overview</div>
+    </>
+  )
+}

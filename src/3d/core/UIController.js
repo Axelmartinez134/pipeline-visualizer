@@ -6,6 +6,9 @@
 import { PROCESS_AUTOMATIONS } from '../constants/processContent.js';
 import { STAGE_CONFIG, BUSINESS_METRICS } from '../constants/businessData.js';
 import { DOMHelpers } from '../utils/domHelpers.js';
+import { FormController } from './FormController.js';
+import { TutorialManager } from './TutorialManager.js';
+import { OverlayManager } from './OverlayManager.js';
 
 export class UIController {
   constructor(sceneManager, businessData) {
@@ -64,6 +67,9 @@ export class UIController {
       }
     };
     
+    this.overlayManager = new OverlayManager(sceneManager, businessData);
+    this.formController = new FormController();
+    this.tutorialManager = new TutorialManager(this);
     this.init();
   }
 
@@ -76,8 +82,8 @@ export class UIController {
     this.updateTabStates('overview');
     
     // Initialize educational overlays with tutorial
-    this.updateEducationalOverlays();
-    this.initializeTutorial();
+    this.overlayManager.updateEducationalOverlays();
+    this.tutorialManager.initializeTutorial();
   }
 
   // Process tab selection with transition throttling
@@ -87,16 +93,16 @@ export class UIController {
       if (this.tutorialState.currentStep === 4) {
         // Step 5 (final step): Complete tutorial on any tab click
         console.log('🎉 TAB CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
-        this.completeTutorial();
+        this.tutorialManager.completeTutorial();
       } else if (processId !== 'overview') {
         // Steps 1-4: Hide tutorial overlays when navigating away from overview
         console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Hiding overlays for ${processId} navigation`);
-        this.hideEducationalOverlays();
+        this.overlayManager.hideEducationalOverlays();
              } else {
          // Returning to overview: Show tutorial overlays at same step
          console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Returning to overview, showing overlays`);
-         this.updateTutorialOverlays(); // Ensure tutorial content is displayed
-         this.showEducationalOverlays();
+         this.tutorialManager.updateTutorialOverlays(); // Ensure tutorial content is displayed
+         this.overlayManager.showEducationalOverlays();
        }
     }
     
@@ -146,7 +152,7 @@ export class UIController {
     }
     
     // Update content
-    this.updateProcessContent(processId);
+      this.updateProcessContent(processId);
     
     // Clear transition state after estimated completion time
     const estimatedDuration = this.getEstimatedTransitionDuration(processId);
@@ -272,7 +278,7 @@ export class UIController {
       return;
     }
 
-    if (ARC_DETECTION.debugMode) {
+    if (this.sceneManager?.camera?.getCurrentConfig) {
       console.log('Resetting camera to overview from:', this.selectedProcess);
     }
 
@@ -295,8 +301,8 @@ export class UIController {
     this.sceneManager.updateStage(stage, value);
     
     // Update metrics
-    this.updateBusinessMetrics();
-    this.updateBottleneckAlert();
+      this.updateBusinessMetrics();
+      this.updateBottleneckAlert();
     
     // Update educational overlays if on overview
     if (this.selectedProcess === 'overview') {
@@ -318,7 +324,7 @@ export class UIController {
     // Complete tutorial if on step 4 and tutorial is active (final step only)
     if (this.tutorialState.isActive && this.tutorialState.currentStep === 4) {
       console.log('🎉 SCENARIO TOGGLE CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
-      this.completeTutorial();
+      this.tutorialManager.completeTutorial();
       return;
     }
     
@@ -368,147 +374,7 @@ export class UIController {
 
   // Lead form submission
   async submitLeadForm() {
-    try {
-      // Get form data
-      const formData = this.collectFormData();
-      
-      // Validate required fields
-      if (!this.validateFormData(formData)) {
-        return; // Validation errors already shown
-      }
-
-      // Show loading state
-      this.setFormLoading(true);
-
-      // Import Airtable service
-      const { airtableService } = await import('../../services/airtableService.js');
-
-      // Collect smart pipeline data
-      const pipelineData = airtableService.collectPipelineData();
-      const userJourney = airtableService.collectUserJourney();
-
-      // Submit to Airtable
-      await airtableService.submitLead({
-        ...formData,
-        pipelineData,
-        userJourney
-      });
-
-      // Show success message
-      this.showFormSuccess();
-
-    } catch (error) {
-      console.error('Form submission error:', error);
-      this.showFormError(error.message);
-    } finally {
-      this.setFormLoading(false);
-    }
-  }
-
-  // Collect form data from DOM
-  collectFormData() {
-    return {
-      name: document.getElementById('name')?.value?.trim() || '',
-      email: document.getElementById('email')?.value?.trim() || '',
-      company: document.getElementById('company')?.value?.trim() || '',
-      phone: document.getElementById('phone')?.value?.trim() || '',
-      industry: document.getElementById('industry')?.value?.trim() || '',
-      companySize: document.getElementById('companySize')?.value || '',
-      challenge: document.getElementById('challenge')?.value || ''
-    };
-  }
-
-  // Validate form data
-  validateFormData(formData) {
-    const errors = [];
-    
-    if (!formData.name) errors.push('Full name is required');
-    if (!formData.email) errors.push('Business email is required');
-    if (!formData.company) errors.push('Company name is required');
-    if (!formData.industry) errors.push('Industry is required');
-    if (!formData.companySize) errors.push('Company size is required');
-    if (!formData.challenge) errors.push('Please select your biggest challenge');
-    
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      errors.push('Please enter a valid email address');
-    }
-
-    if (errors.length > 0) {
-      this.showFormError(errors.join('<br>'));
-      return false;
-    }
-
-    return true;
-  }
-
-  // Show loading state
-  setFormLoading(isLoading) {
-    const submitBtn = document.getElementById('submitBtn');
-    const form = document.getElementById('leadForm');
-    
-    if (submitBtn) {
-      submitBtn.disabled = isLoading;
-      submitBtn.textContent = isLoading ? '⏳ Submitting...' : 'Get My Automation Strategy';
-      submitBtn.style.opacity = isLoading ? '0.7' : '1';
-    }
-    
-    if (form) {
-      form.style.pointerEvents = isLoading ? 'none' : 'auto';
-    }
-  }
-
-  // Show success message
-  showFormSuccess() {
-    const statusElement = document.getElementById('formStatus');
-    if (statusElement) {
-      statusElement.innerHTML = `
-        <div style="
-          background: linear-gradient(135deg, #059669, #34D399);
-          color: white;
-          padding: 15px;
-          border-radius: 10px;
-          margin: 15px 0;
-          text-align: center;
-          font-weight: 500;
-        ">
-          ✅ Success! Your automation strategy will be sent within 24 hours.<br>
-          We'll follow up to schedule your strategy call.
-        </div>
-      `;
-    }
-
-    // Reset form after short delay
-    setTimeout(() => {
-      document.getElementById('leadForm')?.reset();
-      if (statusElement) statusElement.innerHTML = '';
-    }, 5000);
-  }
-
-  // Show error message
-  showFormError(message) {
-    const statusElement = document.getElementById('formStatus');
-    if (statusElement) {
-      statusElement.innerHTML = `
-        <div style="
-          background: linear-gradient(135deg, #DC2626, #EF4444);
-          color: white;
-          padding: 15px;
-          border-radius: 10px;
-          margin: 15px 0;
-          text-align: center;
-          font-weight: 500;
-        ">
-          ❌ ${message}
-        </div>
-      `;
-
-      // Auto-hide error after 7 seconds
-      setTimeout(() => {
-        if (statusElement) statusElement.innerHTML = '';
-      }, 7000);
-    }
+    return this.formController.submitLeadForm();
   }
 
   // Initialize control values
@@ -692,8 +558,8 @@ export class UIController {
     
     // Add a small delay then show normal overlays
     setTimeout(() => {
-      this.updateEducationalOverlays(); // Switch to normal mode
-      this.showEducationalOverlays();
+      this.overlayManager.updateEducationalOverlays(); // Switch to normal mode
+      this.overlayManager.showEducationalOverlays();
       console.log('✅ Normal mode activated - explore the pipeline!');
     }, 300);
   }
@@ -899,7 +765,7 @@ export class UIController {
       console.log(`✅ Highlighted: ${tab.textContent.trim()}`);
       
       // Force style recalculation
-      tab.offsetHeight; // Trigger reflow
+      void tab.offsetHeight; // Trigger reflow
     });
     
     console.log('✅ All tabs should now be glowing golden - click any tab to complete tutorial!');
@@ -1022,7 +888,7 @@ export class UIController {
       if (wasOnSpecificStage) {
         // Coming back to overview from a zoomed stage - delay overlay appearance
         console.log('Hiding overlays and setting up delayed appearance');
-        this.hideEducationalOverlays();
+        this.overlayManager.hideEducationalOverlays();
         
         // Calculate 80% of animation duration for delayed appearance
         const totalDuration = this.getEstimatedTransitionDuration(processId);
@@ -1035,8 +901,8 @@ export class UIController {
           // Only show if we're still on overview (user didn't click away)
           if (this.selectedProcess === 'overview') {
             console.log('Still on overview, showing overlays');
-            this.updateEducationalOverlays();
-            this.showEducationalOverlays();
+            this.overlayManager.updateEducationalOverlays();
+            this.overlayManager.showEducationalOverlays();
           } else {
             console.log('No longer on overview, not showing overlays');
           }
@@ -1045,13 +911,13 @@ export class UIController {
       } else {
         // Direct access to overview or already on overview - show immediately
         console.log('Direct access to overview, showing immediately');
-        this.updateEducationalOverlays();
-        this.showEducationalOverlays();
+        this.overlayManager.updateEducationalOverlays();
+        this.overlayManager.showEducationalOverlays();
       }
     } else {
       // Zooming into specific stage - hide overlays immediately
       console.log('Zooming into specific stage, hiding overlays');
-      this.hideEducationalOverlays();
+      this.overlayManager.hideEducationalOverlays();
     }
   }
 

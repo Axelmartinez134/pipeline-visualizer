@@ -3,6 +3,8 @@
  * Centralized error management for the 3D pipeline system
  */
 
+import { CAMERA_POSITIONS } from '../constants/cameraSettings.js';
+
 export class ErrorHandler {
   static init() {
     // Initialize error handling
@@ -50,7 +52,7 @@ export class ErrorHandler {
       // Try direct fallback transition
       if (camera && camera.executeDirectTransition) {
         console.log('Attempting fallback direct transition');
-        const targetPos = camera.constructor.CAMERA_POSITIONS?.[processId];
+        const targetPos = CAMERA_POSITIONS?.[processId];
         if (targetPos) {
           camera.executeDirectTransition(processId, targetPos, 1); // Fast 1-second fallback
         }
@@ -240,7 +242,7 @@ export class ErrorHandler {
       forceDirectTransition: (processId) => {
         const camera = window.PipelineVisualization?.renderer?.sceneManager?.camera;
         if (camera && camera.executeDirectTransition) {
-          const targetPos = camera.constructor.CAMERA_POSITIONS?.[processId];
+          const targetPos = CAMERA_POSITIONS?.[processId];
           if (targetPos) {
             camera.executeDirectTransition(processId, targetPos, 1);
           }

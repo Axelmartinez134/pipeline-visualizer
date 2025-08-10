@@ -618,6 +618,92 @@ export class Camera {
     return this.camera;
   }
 
+  getCurrentLookAtDirection() {
+    const currentLookAt = new THREE.Vector3();
+    this.camera.getWorldDirection(currentLookAt);
+    currentLookAt.multiplyScalar(10); // Extend the direction vector
+    currentLookAt.add(this.camera.position); // Convert to world position
+    return currentLookAt;
+  }
+
+  // Zoom functionality
+  zoomIn() {
+    try {
+      if (this.isTransitioning()) {
+        console.log('Cannot zoom while camera is transitioning');
+        return;
+      }
+
+      const currentZ = this.camera.position.z;
+      const newZ = Math.max(currentZ - 3, 5); // Don't get too close to the pipeline
+      
+      gsap.to(this.camera.position, {
+        duration: 1,
+        z: newZ,
+        ease: "power2.inOut"
+      });
+
+      if (ARC_DETECTION.debugMode) {
+        console.log(`Zooming in: ${currentZ.toFixed(2)} → ${newZ.toFixed(2)}`);
+      }
+    } catch (error) {
+      console.error('Error during zoom in:', error);
+    }
+  }
+
+  zoomOut() {
+    try {
+      if (this.isTransitioning()) {
+        console.log('Cannot zoom while camera is transitioning');
+        return;
+      }
+
+      const currentZ = this.camera.position.z;
+      const newZ = Math.min(currentZ + 3, 25); // Don't get too far from the pipeline
+      
+      gsap.to(this.camera.position, {
+        duration: 1,
+        z: newZ,
+        ease: "power2.inOut"
+      });
+
+      if (ARC_DETECTION.debugMode) {
+        console.log(`Zooming out: ${currentZ.toFixed(2)} → ${newZ.toFixed(2)}`);
+      }
+    } catch (error) {
+      console.error('Error during zoom out:', error);
+    }
+  }
+
+  resetZoom() {
+    try {
+      if (this.isTransitioning()) {
+        console.log('Cannot reset zoom while camera is transitioning');
+        return;
+      }
+
+      const targetPos = CAMERA_POSITIONS[this.selectedProcess];
+      if (!targetPos) return;
+
+      // Reset to the default Z position for current process
+      const deviceAdjustedZ = DeviceDetection.isMobile() 
+        ? targetPos.z + 3  // Mobile offset
+        : targetPos.z;
+
+      gsap.to(this.camera.position, {
+        duration: 1.5,
+        z: deviceAdjustedZ,
+        ease: "power2.inOut"
+      });
+
+      if (ARC_DETECTION.debugMode) {
+        console.log(`Resetting zoom to default for ${this.selectedProcess}: ${deviceAdjustedZ}`);
+      }
+    } catch (error) {
+      console.error('Error during zoom reset:', error);
+    }
+  }
+
   dispose() {
     try {
       // Interrupt any active transitions
@@ -629,13 +715,5 @@ export class Camera {
     } catch (error) {
       console.warn('Error in camera dispose:', error);
     }
-  }
-
-  getCurrentLookAtDirection() {
-    const currentLookAt = new THREE.Vector3();
-    this.camera.getWorldDirection(currentLookAt);
-    currentLookAt.multiplyScalar(10); // Extend the direction vector
-    currentLookAt.add(this.camera.position); // Convert to world position
-    return currentLookAt;
   }
 } 
