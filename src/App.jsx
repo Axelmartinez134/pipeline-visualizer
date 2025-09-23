@@ -144,11 +144,13 @@ function App() {
           </div>
         </div>
         <div className="simulation-controls">
-          <PlayPause />
+          {!isMobile ? <PlayPause /> : null}
           
-          <div className="zoom-controls">
-            <ZoomButtons />
-          </div>
+          {!isMobile ? (
+            <div className="zoom-controls">
+              <ZoomButtons />
+            </div>
+          ) : null}
           
           {!isMobile ? (
             <div className="scenario-toggle">
