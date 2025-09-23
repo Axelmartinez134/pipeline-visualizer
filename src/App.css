@@ -121,6 +121,8 @@
     flex: 1;
 }
 
+.mobile-toggle-row { display: flex; gap: 6px; width: 100%; }
+
 /* Sticky CTA Bar for Mobile */
 .sticky-cta-bar {
     display: none; /* Hidden by default */
@@ -941,3 +943,45 @@
         order: 3; /* Place scenario toggle last */
     }
 } 
+
+/* Auto-Optimize controls */
+.autoopt-controls { margin-top: 8px; }
+.autoopt-controls.mobile { margin-top: 8px; }
+.autoopt-row { display: flex; align-items: center; gap: 10px; }
+.autoopt-btn {
+  background: linear-gradient(45deg, #1E3A8A, #374151);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.autoopt-btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+.autoopt-stop { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.6); padding: 8px 12px; border-radius: 18px; }
+
+.autoopt-progress { margin-top: 6px; }
+.autoopt-progress-track {
+  position: relative;
+  height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.autoopt-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #34D399;
+  transition: width 0.1s linear;
+}
+.autoopt-tick { position: absolute; top: 0; width: 2px; height: 100%; background: rgba(255,255,255,0.6); transform: translateX(-1px); }
+
+/* Overlay progress bar within render area */
+.render-progress { position: absolute; left: 10px; right: 10px; top: 10px; height: 4px; background: rgba(0,0,0,0.25); border-radius: 4px; z-index: 20; }
+.render-progress-fill { height: 100%; width: 0%; background: #34D399; transition: width 0.1s linear; }
+.render-progress-tick { position: absolute; top: 0; width: 2px; height: 100%; background: rgba(255,255,255,0.8); transform: translateX(-1px); }
+
+/* Disabled state while sequence running */
+.sequence-running .tab.disabled { pointer-events: none; opacity: 0.6; }
+.sequence-running .slider[disabled] { opacity: 0.6; } 

@@ -132,6 +132,12 @@ function App() {
 
       <PipelineVisualizer>
         {isMobile ? <MobileScenarioSwitcher /> : null}
+        {/* Overlay progress inside render area */}
+        <div className="render-progress">
+          <div id="renderProgressBarFill" className="render-progress-fill" />
+          <span className="render-progress-tick" style={{ left: '33.33%' }} />
+          <span className="render-progress-tick" style={{ left: '66.66%' }} />
+        </div>
         <div className="capacity-controls">
           <div className="slider-group">
             <div className="slider-header">
@@ -183,9 +189,12 @@ function App() {
           ) : null}
           
           {!isMobile ? (
-            <div className="scenario-toggle">
-              <ScenarioToggle />
-            </div>
+            <>
+              <div className="scenario-toggle">
+                <ScenarioToggle />
+              </div>
+              <AutoOptimizeControls />
+            </>
           ) : null}
         </div>
       </PipelineVisualizer>
@@ -251,6 +260,7 @@ function StageSlider({ stage, defaultValue }) {
   return (
     <input 
       type="range" className="slider" min="0" max="100" defaultValue={defaultValue}
+      data-stage={stage}
       onChange={(e) => v.updateStage(stage, parseInt(e.target.value) + 10)}
     />
   );
@@ -278,29 +288,95 @@ function ScenarioToggle() {
   const v = useVisualizer();
   return (
     <>
-      <button className="toggle-btn active" onClick={() => v.switchScenario('current')}>Current State</button>
-      <button className="toggle-btn" onClick={() => v.switchScenario('optimized')}>After Automation</button>
+      <button className="toggle-btn active" data-scenario="current" onClick={() => v.switchScenario('current')}>Current State</button>
+      <button className="toggle-btn" data-scenario="optimized" onClick={() => v.switchScenario('optimized')}>After Automation</button>
     </>
   )
+}
+
+function AutoOptimizeControls() {
+  const v = useVisualizer();
+  const [running, setRunning] = useState(false);
+  const [scenario, setScenario] = useState('current');
+
+  useEffect(() => {
+    const onScenario = (e) => setScenario(e.detail?.scenario || 'current');
+    const onState = (e) => setRunning(!!e.detail?.running);
+    window.addEventListener('scenario:changed', onScenario);
+    window.addEventListener('autoopt:state', onState);
+    return () => {
+      window.removeEventListener('scenario:changed', onScenario);
+      window.removeEventListener('autoopt:state', onState);
+    }
+  }, []);
+
+  const showButton = scenario === 'optimized';
+
+  return (
+    <div className="autoopt-controls">
+      {showButton ? (
+        <div className="autoopt-row">
+          <button
+            className="autoopt-btn"
+            disabled={running}
+            aria-pressed={running}
+            onClick={() => v.startAutoOptimizeSequence && v.startAutoOptimizeSequence()}
+          >
+            Auto-Optimize (x3)
+          </button>
+          {running ? (
+            <button className="autoopt-stop" onClick={() => v.stopAutoOptimizeSequence && v.stopAutoOptimizeSequence()}>Stop</button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function MobileScenarioSwitcher() {
   const v = useVisualizer();
   const [active, setActive] = useState('current');
+  const [running, setRunning] = useState(false);
+  useEffect(() => {
+    const onState = (e) => setRunning(!!e.detail?.running);
+    window.addEventListener('autoopt:state', onState);
+    return () => window.removeEventListener('autoopt:state', onState);
+  }, []);
   return (
     <div className="mobile-scenario-switcher">
-      <button
-        className={`toggle-btn ${active === 'current' ? 'active' : ''}`}
-        onClick={() => { setActive('current'); v.switchScenario('current'); }}
-      >
-        Current State
-      </button>
-      <button
-        className={`toggle-btn ${active === 'optimized' ? 'active' : ''}`}
-        onClick={() => { setActive('optimized'); v.switchScenario('optimized'); }}
-      >
-        After Automation
-      </button>
+      <div className="mobile-toggle-row">
+        <button
+          className={`toggle-btn ${active === 'current' ? 'active' : ''}`}
+          data-scenario="current"
+          onClick={() => { setActive('current'); v.switchScenario('current'); }}
+        >
+          Current State
+        </button>
+        <button
+          className={`toggle-btn ${active === 'optimized' ? 'active' : ''}`}
+          data-scenario="optimized"
+          onClick={() => { setActive('optimized'); v.switchScenario('optimized'); }}
+        >
+          After Automation
+        </button>
+      </div>
+      {active === 'optimized' ? (
+        <div className="autoopt-controls mobile">
+          <div className="autoopt-row">
+            <button
+              className="autoopt-btn"
+              disabled={running}
+              aria-pressed={running}
+              onClick={() => v.startAutoOptimizeSequence && v.startAutoOptimizeSequence()}
+            >
+              Auto-Optimize (x3)
+            </button>
+            {running ? (
+              <button className="autoopt-stop" onClick={() => v.stopAutoOptimizeSequence && v.stopAutoOptimizeSequence()}>Stop</button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -330,7 +406,7 @@ function StickyCTA({ isVisible }) {
   return (
     <div className={`sticky-cta-bar ${isVisible ? 'visible' : ''}`}>
       <div className="sticky-cta-content">
-        <h4>Ready to Find Your Constraint?</h4>
+        <h4>Ready to Remove Your Constraint?</h4>
         <button onClick={scrollToForm}>
           Get My Automation Strategy
         </button>

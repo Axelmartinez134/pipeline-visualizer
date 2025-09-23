@@ -73,7 +73,7 @@ export class DOMHelpers {
 
   static updateToggleButtons(activeScenario) {
     document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-    const clickedBtn = document.querySelector(`.toggle-btn[onclick*="${activeScenario}"]`);
+    const clickedBtn = document.querySelector(`.toggle-btn[data-scenario="${activeScenario}"]`);
     if (clickedBtn) {
       clickedBtn.classList.add('active');
     }

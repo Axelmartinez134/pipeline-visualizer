@@ -19,6 +19,17 @@ export class Pipeline {
     this.labels = []; // Store sprite text labels
     this.isSimulating = false;
     this.currentScenario = 'current';
+
+    // Track baseline and improved stage for optimized scenario
+    this.optimizedBaseline = null;
+    this.optimizedImprovedStage = null;
+    this.optimizedBaselineThirdDistinct = null;
+    this.optimizedDeltaStep = null;
+    
+    // Dynamic normalization bounds (used in optimized scenario)
+    this.normMin = PIPELINE_CONFIG.MIN_POSSIBLE_CAPACITY;
+    this.normMax = PIPELINE_CONFIG.MAX_POSSIBLE_CAPACITY;
+    this.normFrozen = false;
     
     // Label names for each stage
     this.stageLabels = {
@@ -39,6 +50,11 @@ export class Pipeline {
       const stages = STAGE_CONFIG.STAGES;
       const stagePositions = STAGE_CONFIG.STAGE_POSITIONS;
       const capacities = stages.map(stage => this.businessData[stage]);
+
+      // Use static normalization across both scenarios to avoid rescaling on toggle
+      this.normMin = PIPELINE_CONFIG.MIN_POSSIBLE_CAPACITY;
+      this.normMax = PIPELINE_CONFIG.MAX_POSSIBLE_CAPACITY;
+      this.normFrozen = false;
       
       // Find bottleneck
       const minCapacity = Math.min(...capacities);
@@ -62,10 +78,12 @@ export class Pipeline {
 
   createPipeStage(stage, index, position, capacity, bottleneckIndex) {
     try {
-      // Calculate pipe radius based on capacity
-      const normalizedCapacity = (capacity - PIPELINE_CONFIG.MIN_POSSIBLE_CAPACITY) / 
-                                 (PIPELINE_CONFIG.MAX_POSSIBLE_CAPACITY - PIPELINE_CONFIG.MIN_POSSIBLE_CAPACITY);
-      const radius = PIPELINE_CONFIG.MIN_RADIUS + (normalizedCapacity * (PIPELINE_CONFIG.MAX_RADIUS - PIPELINE_CONFIG.MIN_RADIUS));
+      // Calculate pipe radius; allow overflow growth in optimized
+      const rawNorm = (capacity - this.normMin) / (this.normMax - this.normMin);
+      const baseNorm = Math.max(0, Math.min(1, rawNorm));
+      const overflow = this.currentScenario === 'optimized' ? Math.max(0, rawNorm - 1) : 0;
+      const baseRadius = PIPELINE_CONFIG.MIN_RADIUS + (baseNorm * (PIPELINE_CONFIG.MAX_RADIUS - PIPELINE_CONFIG.MIN_RADIUS));
+      const radius = baseRadius + overflow * (PIPELINE_CONFIG.MAX_RADIUS * 0.65); // clearer extra growth
       
       // Create pipe geometry
       const pipeGeometry = new THREE.CylinderGeometry(
@@ -130,12 +148,17 @@ export class Pipeline {
   createPipeMaterial(stage, index, bottleneckIndex) {
     let color;
     
-    if (index === bottleneckIndex && this.currentScenario === 'current') {
-      color = MATERIAL_COLORS.BOTTLENECK; // Red for bottleneck
-    } else if (this.currentScenario === 'optimized' && stage === 'onboarding') {
-      color = MATERIAL_COLORS.OPTIMIZED; // Green for optimized
+    if (this.currentScenario === 'current') {
+      color = index === bottleneckIndex ? MATERIAL_COLORS.BOTTLENECK : MATERIAL_COLORS.NORMAL;
     } else {
-      color = MATERIAL_COLORS.NORMAL; // Normal metallic
+      // optimized: current bottleneck red, most recently improved green, others gray
+      if (index === bottleneckIndex) {
+        color = MATERIAL_COLORS.BOTTLENECK;
+      } else if (stage === this.optimizedImprovedStage) {
+        color = MATERIAL_COLORS.OPTIMIZED;
+      } else {
+        color = MATERIAL_COLORS.NORMAL;
+      }
     }
     
     return new THREE.MeshLambertMaterial({ 
@@ -241,14 +264,106 @@ export class Pipeline {
     this.currentScenario = scenario;
     
     if (scenario === 'optimized') {
-      // Apply realistic coaching automation improvement
-      this.businessData.onboarding = 75; // 3x improvement
+      // Capture baseline once when switching from current to optimized
+      if (!this.optimizedBaseline) {
+        this.optimizedBaseline = { ...this.businessData };
+      }
+      
+      // Identify baseline 3rd distinct smallest capacity (Option A)
+      const baselineCaps = STAGE_CONFIG.STAGES.map(s => this.optimizedBaseline[s]);
+      const baselineDistinctSorted = Array.from(new Set(baselineCaps)).sort((a, b) => a - b);
+      this.optimizedBaselineThirdDistinct = baselineDistinctSorted.length >= 3
+        ? baselineDistinctSorted[2]
+        : baselineDistinctSorted[baselineDistinctSorted.length - 1];
+      
+      // Identify current bottleneck stage
+      const bottleneckStage = this.getBottleneckStage();
+      this.optimizedImprovedStage = bottleneckStage;
+      
+      const currentValue = this.businessData[bottleneckStage];
+      
+      // Target = max(current + 1, baselineThirdDistinct + 1), capped (Option A)
+      const firstTarget = Math.min(
+        PIPELINE_CONFIG.MAX_POSSIBLE_CAPACITY,
+        Math.max(currentValue + 1, this.optimizedBaselineThirdDistinct + 1)
+      );
+      
+      this.businessData[bottleneckStage] = firstTarget;
+      // Store delta so subsequent steps grow similarly to the first improvement
+      this.optimizedDeltaStep = Math.max(1, firstTarget - currentValue);
     } else if (scenario === 'current') {
-      // Reset to original bottleneck
-      this.businessData.onboarding = 25;
+      // Restore baseline values exactly
+      if (this.optimizedBaseline) {
+        STAGE_CONFIG.STAGES.forEach(stage => {
+          this.businessData[stage] = this.optimizedBaseline[stage];
+        });
+      }
+      this.optimizedBaseline = null;
+      this.optimizedImprovedStage = null;
+      this.optimizedBaselineThirdDistinct = null;
+      this.optimizedDeltaStep = null;
+      this.normFrozen = false;
     }
     
     return this.create(); // Recreate with new scenario
+  }
+
+  // Apply an additional optimization step while already in optimized scenario
+  applyOptimizedStep() {
+    if (this.currentScenario !== 'optimized') return null;
+
+    // Identify current bottleneck stage
+    const bottleneckStage = this.getBottleneckStage();
+    this.optimizedImprovedStage = bottleneckStage;
+
+    const currentValue = this.businessData[bottleneckStage];
+    const stepDelta = Math.max(1, this.optimizedDeltaStep ?? 1);
+    const target = Math.min(
+      PIPELINE_CONFIG.MAX_POSSIBLE_CAPACITY,
+      currentValue + stepDelta
+    );
+    this.businessData[bottleneckStage] = target;
+
+    this.create();
+    return bottleneckStage;
+  }
+
+  // Brief halo to draw attention to improved stage
+  flashStageHalo(stage) {
+    try {
+      const pipe = this.pipes.find(p => p.userData?.stage === stage);
+      if (!pipe) return;
+
+      const baseGeom = pipe.geometry?.parameters;
+      if (!baseGeom) return;
+
+      const glowGeometry = new THREE.CylinderGeometry(
+        baseGeom.radiusTop * 1.3,
+        baseGeom.radiusBottom * 1.3,
+        baseGeom.height * 1.1,
+        baseGeom.radialSegments
+      );
+      const glowMaterial = new THREE.MeshLambertMaterial({
+        color: 0x40c057,
+        transparent: true,
+        opacity: 0.45,
+        emissive: 0x40c057,
+        emissiveIntensity: 0.8,
+        side: THREE.DoubleSide
+      });
+      const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+      glowMesh.position.copy(pipe.position);
+      glowMesh.rotation.copy(pipe.rotation);
+      this.pipelineGroup.add(glowMesh);
+
+      setTimeout(() => {
+        this.pipelineGroup.remove(glowMesh);
+        glowMesh.geometry?.dispose?.();
+        glowMesh.material?.dispose?.();
+      }, 1000);
+    } catch (e) {
+      console.warn('flashStageHalo error', e);
+    }
   }
 
   calculateRevenue() {

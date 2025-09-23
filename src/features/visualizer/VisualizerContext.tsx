@@ -13,6 +13,8 @@ export type VisualizerApi = {
   resetZoom: () => void;
   updateIndustry: (industry: string) => void;
   submitLeadForm: () => void | Promise<void>;
+  startAutoOptimizeSequence?: () => void;
+  stopAutoOptimizeSequence?: () => void;
 };
 
 const noop = () => {};
@@ -132,6 +134,14 @@ export function VisualizerProvider({ children }: { children: React.ReactNode }) 
         // As a last resort, inform in console; UI will remain unchanged
         console.warn('submitLeadForm: UI controller not ready');
       }
+    },
+    startAutoOptimizeSequence: () => {
+      const ui = (window as any).PipelineVisualization?.renderer?.uiController;
+      if (ui?.startAutoOptimizeSequence) ui.startAutoOptimizeSequence();
+    },
+    stopAutoOptimizeSequence: () => {
+      const ui = (window as any).PipelineVisualization?.renderer?.uiController;
+      if (ui?.stopAutoOptimizeSequence) ui.stopAutoOptimizeSequence();
     },
   }), []);
 
