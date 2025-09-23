@@ -90,7 +90,6 @@
     gap: 8px;
     text-align: center;
     white-space: normal; /* allow 2-line labels on small screens */
-    min-height: 44px; /* touch target */
 }
 
 .tab:hover {
