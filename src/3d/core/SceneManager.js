@@ -158,9 +158,11 @@ export class SceneManager {
   selectProcess(processId) {
     console.log('SceneManager.selectProcess called with:', processId);
     
+    let started = false;
     if (this.camera) {
-      this.camera.animateToProcess(processId);
-      console.log('Camera animation started for:', processId);
+      // Return whether the camera accepted the transition so UI logic can proceed correctly
+      started = !!this.camera.animateToProcess(processId);
+      console.log('Camera animation', started ? 'started' : 'not started', 'for:', processId);
     }
     
     if (this.thoughtBubbles) {
@@ -179,6 +181,8 @@ export class SceneManager {
     } else {
       console.error('ThoughtBubbles not initialized!');
     }
+
+    return started;
   }
 
   resetCamera() {
