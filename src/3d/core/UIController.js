@@ -4,11 +4,14 @@
  */
 
 import { PROCESS_AUTOMATIONS } from '../constants/processContent.js';
-import { STAGE_CONFIG, BUSINESS_METRICS } from '../constants/businessData.js';
+import { STAGE_CONFIG } from '../constants/businessData.js';
 import { DOMHelpers } from '../utils/domHelpers.js';
 import { FormController } from './FormController.js';
 import { TutorialManager } from './TutorialManager.js';
 import { OverlayManager } from './OverlayManager.js';
+import { TransitionGuard } from './TransitionGuard.js';
+import { MetricsService } from './MetricsService.js';
+import { TabStateManager } from './TabStateManager.js';
 
 export class UIController {
   constructor(sceneManager, businessData) {
@@ -70,13 +73,16 @@ export class UIController {
     this.overlayManager = new OverlayManager(sceneManager, businessData);
     this.formController = new FormController();
     this.tutorialManager = new TutorialManager(this);
+    this.transitionGuard = new TransitionGuard(sceneManager?.camera, this.minTransitionInterval);
+    this.metricsService = new MetricsService(sceneManager, businessData);
+    this.tabStateManager = new TabStateManager();
     this.init();
   }
 
   init() {
     this.initializeControlValues();
     this.updateProcessContent('overview');
-    this.updateBusinessMetrics();
+    this.metricsService.updateBusinessMetrics();
     
     // CRITICAL FIX: Set Overview tab as active on app load
     this.updateTabStates('overview');
@@ -108,38 +114,29 @@ export class UIController {
     
     // Prevent rapid clicking and transition conflicts
     const now = Date.now();
-    if (this.isTransitionInProgress) {
+    if (!this.transitionGuard.canStart()) {
       console.log('Transition in progress, ignoring click for:', processId);
       return false;
     }
-
-    if (now - this.lastTransitionTime < this.minTransitionInterval) {
-      console.log('Too soon after last transition, ignoring click for:', processId);
-      return false;
-    }
-
-    // Check if scene manager camera is transitioning
-    if (this.sceneManager?.camera?.isTransitioning && this.sceneManager.camera.isTransitioning()) {
-      console.log('Camera transition in progress, ignoring click for:', processId);
-      return false;
-    }
-
-    // Update transition state
-    this.isTransitionInProgress = true;
-    this.lastTransitionTime = now;
+    this.transitionGuard.markStart();
     
     // Capture previous state for educational overlays
     const previousProcess = this.selectedProcess;
     this.selectedProcess = processId;
     
     // Handle educational overlays with previous state
-    this.handleEducationalOverlays(processId, previousProcess);
+    this.overlayManager.handleEducationalOverlays(
+      processId,
+      previousProcess,
+      (pid) => this.getEstimatedTransitionDuration(pid),
+      this.tutorialState.isActive && !this.tutorialState.completed
+    );
     
     // Add visual feedback
-    this.addTransitionFeedback(processId);
+    this.tabStateManager.addTransitionFeedback(processId);
     
     // Update UI state - Fix tab selection logic
-    this.updateTabStates(processId);
+    this.tabStateManager.updateTabStates(processId);
     
     // Start 3D scene transition
     const transitionSuccess = this.sceneManager.selectProcess(processId);
@@ -156,10 +153,9 @@ export class UIController {
     
     // Clear transition state after estimated completion time
     const estimatedDuration = this.getEstimatedTransitionDuration(processId);
-    setTimeout(() => {
-      this.isTransitionInProgress = false;
-      this.removeTransitionFeedback();
-    }, estimatedDuration + 200); // Add 200ms buffer
+    this.transitionGuard.markEndAfter(estimatedDuration + 200, () => {
+      this.tabStateManager.removeTransitionFeedback();
+    });
     
     return true;
   }
@@ -287,7 +283,7 @@ export class UIController {
     // Use the normal selectProcess flow to ensure consistent behavior
     this.sceneManager.selectProcess('overview');
     this.updateProcessContent('overview');
-    this.updateTabStates('overview');
+    this.tabStateManager.updateTabStates('overview');
   }
 
   // Update stage capacity with transition state awareness
@@ -301,12 +297,12 @@ export class UIController {
     this.sceneManager.updateStage(stage, value);
     
     // Update metrics
-      this.updateBusinessMetrics();
-      this.updateBottleneckAlert();
+      this.metricsService.updateBusinessMetrics();
+      this.metricsService.updateBottleneckAlert();
     
     // Update educational overlays if on overview
     if (this.selectedProcess === 'overview') {
-      this.updateEducationalOverlays();
+      this.overlayManager.updateEducationalOverlays();
     }
   }
 
@@ -350,12 +346,12 @@ export class UIController {
     }
     
     // Update metrics and content
-    this.updateBusinessMetrics();
-    this.updateBottleneckAlert();
+    this.metricsService.updateBusinessMetrics();
+    this.metricsService.updateBottleneckAlert();
     
     // Update educational overlays if on overview
     if (this.selectedProcess === 'overview') {
-      this.updateEducationalOverlays();
+      this.overlayManager.updateEducationalOverlays();
     }
     
     if (this.selectedProcess !== 'overview') {
@@ -389,39 +385,11 @@ export class UIController {
         slider.value = this.businessData[stage] - 10; // Convert to display value
       }
     });
-    this.updateBottleneckAlert();
+    this.metricsService.updateBottleneckAlert();
   }
 
   // Update business metrics display
-  updateBusinessMetrics() {
-    const metrics = this.sceneManager.getBusinessMetrics();
-    if (!metrics) return;
-    
-    // Update revenue
-    DOMHelpers.updateRevenue(metrics.revenue);
-    
-    // Update efficiency
-    DOMHelpers.updateEfficiency(metrics.efficiency);
-    
-    // Update lost revenue
-    const capacities = Object.values(this.businessData);
-    const maxCapacity = Math.max(...capacities);
-    const potentialRevenue = maxCapacity * BUSINESS_METRICS.CLIENT_VALUE_ANNUAL;
-    const lostRevenue = potentialRevenue - metrics.revenue;
-    DOMHelpers.updateBottleneckImpact(lostRevenue);
-  }
-
-  // Update bottleneck alert
-  updateBottleneckAlert() {
-    const metrics = this.sceneManager.getBusinessMetrics();
-    if (!metrics) return;
-    
-    const stageName = STAGE_CONFIG.STAGE_NAMES[metrics.bottleneckStage];
-    const alertElement = document.getElementById('bottleneckAlert');
-    if (alertElement) {
-      alertElement.innerHTML = `🚨 <strong>${stageName}</strong> is your bottleneck!`;
-    }
-  }
+  // Removed: metrics logic handled by MetricsService
 
   // Get current transition state for debugging
   getTransitionState() {
@@ -437,8 +405,8 @@ export class UIController {
   // Tutorial System Methods
   initializeTutorial() {
     if (this.tutorialState.isActive) {
-      this.updateTutorialOverlays();
-      this.showEducationalOverlays();
+    this.updateTutorialOverlays();
+    this.overlayManager.showEducationalOverlays();
       this.setupTutorialClickHandlers();
       
       // Apply highlighting for current step (same pattern as advanceTutorial)
@@ -551,7 +519,7 @@ export class UIController {
     this.tutorialState.isActive = false;
     
     // First hide tutorial overlays
-    this.hideEducationalOverlays();
+    this.overlayManager.hideEducationalOverlays();
     
     // Remove all tutorial styling and highlights
     this.removeTutorialHighlights();
@@ -921,91 +889,7 @@ export class UIController {
     }
   }
 
-  updateEducationalOverlays() {
-    try {
-      // If tutorial is active, use tutorial overlays instead
-      if (this.tutorialState.isActive && !this.tutorialState.completed) {
-        return;
-      }
-      
-      // Update business type from dropdown
-      const industrySelect = document.getElementById('industrySelect');
-      const businessTypeText = document.getElementById('businessTypeText');
-      
-      if (industrySelect && businessTypeText) {
-        const selectedOption = industrySelect.options[industrySelect.selectedIndex];
-        const businessType = selectedOption ? selectedOption.text.replace(' Business', '') : 'Coaching';
-        businessTypeText.textContent = businessType;
-      }
-
-      // Update constraint stage and triangle position
-      const constraintStageText = document.getElementById('constraintStageText');
-      const bottomOverlay = document.getElementById('educationalBottomOverlay');
-      
-      if (constraintStageText && bottomOverlay) {
-        const bottleneckStage = this.sceneManager.pipeline.getBottleneckStage();
-        
-        const stageNames = {
-          'leadGen': 'Marketing',
-          'qualification': 'Sales', 
-          'onboarding': 'Onboarding',
-          'delivery': 'Fulfillment',
-          'retention': 'Retention'
-        };
-        
-        // Map stage names for triangle classes
-        const triangleStageMap = {
-          'leadGen': 'marketing',
-          'qualification': 'sales',
-          'onboarding': 'onboarding', 
-          'delivery': 'fulfillment',
-          'retention': 'retention'
-        };
-        
-        constraintStageText.textContent = stageNames[bottleneckStage] || 'Onboarding';
-        
-        // Remove all triangle classes
-        bottomOverlay.classList.remove('triangle-marketing', 'triangle-sales', 'triangle-onboarding', 'triangle-fulfillment', 'triangle-retention');
-        
-        // Add the correct triangle class for current bottleneck
-        const triangleStage = triangleStageMap[bottleneckStage] || 'onboarding';
-        const triangleClass = `triangle-${triangleStage}`;
-        bottomOverlay.classList.add(triangleClass);
-      }
-    } catch (error) {
-      console.error('Error updating educational overlays:', error);
-    }
-  }
-
-  showEducationalOverlays() {
-    console.log('showEducationalOverlays called');
-    const topOverlay = document.getElementById('educationalTopOverlay');
-    const bottomOverlay = document.getElementById('educationalBottomOverlay');
-    
-    if (topOverlay) {
-      topOverlay.classList.remove('hidden');
-      console.log('Top overlay shown');
-    }
-    if (bottomOverlay) {
-      bottomOverlay.classList.remove('hidden');
-      console.log('Bottom overlay shown');
-    }
-  }
-
-  hideEducationalOverlays() {
-    console.log('hideEducationalOverlays called');
-    const topOverlay = document.getElementById('educationalTopOverlay');
-    const bottomOverlay = document.getElementById('educationalBottomOverlay');
-    
-    if (topOverlay) {
-      topOverlay.classList.add('hidden');
-      console.log('Top overlay hidden');
-    }
-    if (bottomOverlay) {
-      bottomOverlay.classList.add('hidden');
-      console.log('Bottom overlay hidden');
-    }
-  }
+  // Removed: overlay updates/visibility handled by OverlayManager
 
   // Update process content panel
   updateProcessContent(processId) {

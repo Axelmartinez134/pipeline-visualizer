@@ -7,6 +7,7 @@ export class OverlayManager {
   constructor(sceneManager, businessData) {
     this.sceneManager = sceneManager;
     this.businessData = businessData;
+    this._pendingTimeout = null;
   }
 
   updateEducationalOverlays() {
@@ -71,6 +72,36 @@ export class OverlayManager {
     const bottomOverlay = document.getElementById('educationalBottomOverlay');
     if (topOverlay) topOverlay.classList.add('hidden');
     if (bottomOverlay) bottomOverlay.classList.add('hidden');
+  }
+
+  /**
+   * Handle overlay visibility around process transitions.
+   * The caller must provide: currentSelectedProcess, previousProcess, and a duration function.
+   */
+  handleEducationalOverlays(processId, previousProcess, getEstimatedDuration, isTutorialActive) {
+    if (isTutorialActive) return;
+    if (this._pendingTimeout) {
+      clearTimeout(this._pendingTimeout);
+      this._pendingTimeout = null;
+    }
+    if (processId === 'overview') {
+      const wasOnSpecificStage = previousProcess && previousProcess !== 'overview';
+      if (wasOnSpecificStage) {
+        this.hideEducationalOverlays();
+        const totalDuration = typeof getEstimatedDuration === 'function' ? getEstimatedDuration(processId) : 2000;
+        const delayTime = totalDuration * 0.8;
+        this._pendingTimeout = setTimeout(() => {
+          this.updateEducationalOverlays();
+          this.showEducationalOverlays();
+          this._pendingTimeout = null;
+        }, delayTime);
+      } else {
+        this.updateEducationalOverlays();
+        this.showEducationalOverlays();
+      }
+    } else {
+      this.hideEducationalOverlays();
+    }
   }
 }
 
