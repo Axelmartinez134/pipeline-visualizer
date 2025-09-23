@@ -3,8 +3,13 @@ import './App.css'
 import PipelineVisualizer from './features/visualizer/PipelineVisualizer.tsx'
 import { VisualizerProvider, useVisualizer } from './features/visualizer/VisualizerContext.tsx'
 import ProcessAnalysis from './features/visualizer/ProcessAnalysis.jsx'
+import { DeviceDetection } from './3d/utils/deviceDetection.js'
 
 function App() {
+  const [isMobile, setIsMobile] = useState(() => {
+    try { return DeviceDetection.isMobile(); } catch { return false; }
+  })
+
   useEffect(() => {
     // Wait for THREE.js and GSAP to be available
     const waitForLibraries = () => {
@@ -59,6 +64,19 @@ function App() {
     }
   }, [])
 
+  // Track viewport changes to update mobile state
+  useEffect(() => {
+    const onResize = () => {
+      try { setIsMobile(DeviceDetection.isMobile()); } catch {}
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    }
+  }, [])
+
   // Debug and native fallback click listener for submit button
   useEffect(() => {
     const button = document.getElementById('submitBtn');
@@ -83,6 +101,7 @@ function App() {
       </div>
 
       <PipelineVisualizer>
+        {isMobile ? <MobileScenarioSwitcher /> : null}
         <div className="capacity-controls">
           <div className="slider-group">
             <div className="slider-header">
@@ -131,9 +150,11 @@ function App() {
             <ZoomButtons />
           </div>
           
-          <div className="scenario-toggle">
-            <ScenarioToggle />
-          </div>
+          {!isMobile ? (
+            <div className="scenario-toggle">
+              <ScenarioToggle />
+            </div>
+          ) : null}
         </div>
       </PipelineVisualizer>
 
@@ -226,6 +247,27 @@ function ScenarioToggle() {
       <button className="toggle-btn active" onClick={() => v.switchScenario('current')}>Current State</button>
       <button className="toggle-btn" onClick={() => v.switchScenario('optimized')}>After Automation</button>
     </>
+  )
+}
+
+function MobileScenarioSwitcher() {
+  const v = useVisualizer();
+  const [active, setActive] = useState('current');
+  return (
+    <div className="mobile-scenario-switcher">
+      <button
+        className={`toggle-btn ${active === 'current' ? 'active' : ''}`}
+        onClick={() => { setActive('current'); v.switchScenario('current'); }}
+      >
+        Current State
+      </button>
+      <button
+        className={`toggle-btn ${active === 'optimized' ? 'active' : ''}`}
+        onClick={() => { setActive('optimized'); v.switchScenario('optimized'); }}
+      >
+        After Automation
+      </button>
+    </div>
   )
 }
 

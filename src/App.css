@@ -110,6 +110,17 @@
     margin-bottom: 20px;
 }
 
+/* Mobile scenario switcher segmented control */
+.mobile-scenario-switcher {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 12px 0;
+}
+
+.mobile-scenario-switcher .toggle-btn {
+    flex: 1;
+}
+
 .control-btn {
     padding: 10px 20px;
     background: rgba(255,255,255,0.2);
