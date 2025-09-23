@@ -76,11 +76,6 @@ function App() {
       <div className="header">
         <h1>🤖 AutomatedBots Pipeline Analyzer</h1>
         <p>Find Your Business Bottlenecks & Automate Your Growth</p>
-        
-        <div className="industry-selector">
-          <label htmlFor="industrySelect">Industry:</label>
-          <IndustrySelect />
-        </div>
       </div>
 
       <div className="tabs">
