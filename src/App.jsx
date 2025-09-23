@@ -229,18 +229,6 @@ function ScenarioToggle() {
   )
 }
 
-function IndustrySelect() {
-  const v = useVisualizer();
-  return (
-    <select id="industrySelect" className="industry-dropdown" onChange={(e) => v.updateIndustry(e.target.value)}>
-      <option value="coaching">Coaching Business</option>
-      <option value="consulting" disabled>Consulting (Coming Soon)</option>
-      <option value="ecommerce" disabled>E-commerce (Coming Soon)</option>
-      <option value="saas" disabled>SaaS (Coming Soon)</option>
-    </select>
-  )
-}
-
 function TabsRow() {
   const v = useVisualizer();
   return (
