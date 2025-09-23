@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import './App.css'
 import PipelineVisualizer from './features/visualizer/PipelineVisualizer.tsx'
 import { VisualizerProvider, useVisualizer } from './features/visualizer/VisualizerContext.tsx'
@@ -9,6 +9,9 @@ function App() {
   const [isMobile, setIsMobile] = useState(() => {
     try { return DeviceDetection.isMobile(); } catch { return false; }
   })
+
+  const [showStickyCTA, setShowStickyCTA] = useState(false)
+  const leadCaptureRef = useRef(null)
 
   useEffect(() => {
     // Wait for THREE.js and GSAP to be available
@@ -76,6 +79,33 @@ function App() {
       window.removeEventListener('orientationchange', onResize);
     }
   }, [])
+
+  // Observer for the sticky CTA
+  useEffect(() => {
+    if (!isMobile) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show the sticky CTA whenever the form is NOT visible (above or below viewport)
+        setShowStickyCTA(!entry.isIntersecting)
+      },
+      {
+        rootMargin: '0px',
+        threshold: 0.01, // Trigger when element is barely visible/hidden
+      }
+    )
+
+    const currentRef = leadCaptureRef.current
+    if (currentRef) {
+      observer.observe(currentRef)
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef)
+      }
+    }
+  }, [isMobile])
 
   // Debug and native fallback click listener for submit button
   useEffect(() => {
@@ -162,7 +192,7 @@ function App() {
 
       <ProcessAnalysis selectedProcess="overview" />
 
-      <div className="lead-capture">
+      <div className="lead-capture" ref={leadCaptureRef}>
         <h3>Ready to Automate Your Pipeline?</h3>
         <p>Get a personalized automation strategy for your coaching business</p>
         
@@ -207,6 +237,8 @@ function App() {
           <SubmitButton />
         </form>
       </div>
+
+      <StickyCTA isVisible={showStickyCTA} />
     </div>
     </VisualizerProvider>
   )
@@ -284,6 +316,26 @@ function TabsRow() {
       <div className="tab" onClick={() => v.selectProcess('retention')}>Retention</div>
       <div className="tab" onClick={() => v.selectProcess('overview')}>Overview</div>
     </>
+  )
+}
+
+function StickyCTA({ isVisible }) {
+  const scrollToForm = () => {
+    const formElement = document.querySelector('.lead-capture');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  return (
+    <div className={`sticky-cta-bar ${isVisible ? 'visible' : ''}`}>
+      <div className="sticky-cta-content">
+        <h4>Ready to Find Your Constraint?</h4>
+        <button onClick={scrollToForm}>
+          Get My Automation Strategy
+        </button>
+      </div>
+    </div>
   )
 }
 
