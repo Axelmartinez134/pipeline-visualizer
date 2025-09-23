@@ -92,8 +92,8 @@ function App() {
     <VisualizerProvider>
     <div className="container">
       <div className="header">
-        <h1>🤖 AutomatedBots Pipeline Analyzer</h1>
-        <p>Find Your Business Bottlenecks & Automate Your Growth</p>
+        <h1>Find the Constraint That Caps Your Growth</h1>
+        <p>A Theory‑of‑Constraints visualizer with AI‑informed automation roadmaps. Predictable, evidence‑based improvements—delivered within 24 hours after submission.</p>
       </div>
 
       <div className="tabs">
