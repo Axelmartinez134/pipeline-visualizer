@@ -277,12 +277,12 @@ function TabsRow() {
   const v = useVisualizer();
   return (
     <>
-      <div className="tab" onClick={() => v.selectProcess('leadGen')}>Marketing</div>
-      <div className="tab" onClick={() => v.selectProcess('qualification')}>Sales</div>
-      <div className="tab" onClick={() => v.selectProcess('onboarding')}>Onboarding</div>
-      <div className="tab" onClick={() => v.selectProcess('delivery')}>Fulfillment</div>
-      <div className="tab" onClick={() => v.selectProcess('retention')}>Retention</div>
-      <div className="tab tab-overview" onClick={() => v.selectProcess('overview')}>Overview</div>
+      <div className="tab" onClick={() => v.selectProcess('leadGen')}>📣 Marketing</div>
+      <div className="tab" onClick={() => v.selectProcess('qualification')}>📞 Sales</div>
+      <div className="tab" onClick={() => v.selectProcess('onboarding')}>🚀 Onboarding</div>
+      <div className="tab" onClick={() => v.selectProcess('delivery')}>📦 Fulfillment</div>
+      <div className="tab" onClick={() => v.selectProcess('retention')}>🔄 Retention</div>
+      <div className="tab" onClick={() => v.selectProcess('overview')}>🏠 Overview</div>
     </>
   )
 }
