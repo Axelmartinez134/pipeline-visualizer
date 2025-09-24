@@ -139,10 +139,13 @@ export class OverlayManager {
         bottomOverlay.classList.add(nextClass);
         this._lastTriangleClass = nextClass;
 
-        // Mobile-only: compute precise red triangle position from projected stage x
-        if (DeviceDetection.isMobile()) {
+        // Defer triangle positioning to the next frame to ensure final layout metrics
+        const last = this.sceneManager.pipeline.lastImprovement;
+        const raf = (window && window.requestAnimationFrame) ? window.requestAnimationFrame : (fn) => setTimeout(fn, 0);
+        raf(() => {
           try {
             const stageOrder = { leadGen: 0, qualification: 1, onboarding: 2, delivery: 3, retention: 4 };
+            // Red
             const idx = stageOrder[bottleneckStage] ?? 2;
             const worldX = STAGE_CONFIG.STAGE_POSITIONS[idx];
             const camera = this.sceneManager?.camera?.getCamera ? this.sceneManager.camera.getCamera() : null;
@@ -153,43 +156,32 @@ export class OverlayManager {
               const vec = new window.THREE.Vector3(worldX, 0, 0);
               vec.project(camera);
               const px = (vec.x * 0.5 + 0.5) * rect.width + rect.left;
-              let leftPx = px - overlayRect.left;
-              leftPx = Math.max(15, Math.min(overlayRect.width - 15, leftPx));
-              bottomOverlay.style.setProperty('--triangle-left', `${leftPx}px`);
+              const leftPxRaw = px - overlayRect.left;
+              // Do not clamp: align exactly to projected X
+              bottomOverlay.style.setProperty('--triangle-left', `${leftPxRaw}px`);
             }
-          } catch (e) {}
-        }
-
-        // Green triangle logic (optimized only, not when improved stage equals bottleneck)
-        const last = this.sceneManager.pipeline.lastImprovement;
-        if (isOptimized && last && last.stage !== bottleneckStage) {
-          bottomOverlay.classList.add('green-pointer');
-          const greenClass = `green-triangle-${triangleStageMap[last.stage] || 'onboarding'}`;
-          bottomOverlay.classList.add(greenClass);
-          // Mobile: compute precise green triangle position
-          if (DeviceDetection.isMobile()) {
-            try {
-              const stageOrder = { leadGen: 0, qualification: 1, onboarding: 2, delivery: 3, retention: 4 };
-              const idxG = stageOrder[last.stage] ?? 2;
-              const worldXg = STAGE_CONFIG.STAGE_POSITIONS[idxG];
-              const camera = this.sceneManager?.camera?.getCamera ? this.sceneManager.camera.getCamera() : null;
-              const canvas = document.getElementById('pipelineCanvas');
+            // Green (optimized and non-overlap only)
+            if (isOptimized && last && last.stage !== bottleneckStage) {
+              bottomOverlay.classList.add('green-pointer');
+              const greenClass = `green-triangle-${triangleStageMap[last.stage] || 'onboarding'}`;
+              bottomOverlay.classList.add(greenClass);
               if (camera && canvas && typeof window.THREE !== 'undefined') {
                 const rect = canvas.getBoundingClientRect();
                 const overlayRect = bottomOverlay.getBoundingClientRect();
-                const vec = new window.THREE.Vector3(worldXg, 0, 0);
-                vec.project(camera);
-                const pxg = (vec.x * 0.5 + 0.5) * rect.width + rect.left;
-                let leftPxG = pxg - overlayRect.left;
-                leftPxG = Math.max(15, Math.min(overlayRect.width - 15, leftPxG));
-                bottomOverlay.style.setProperty('--triangle-green-left', `${leftPxG}px`);
+                const idxG = stageOrder[last.stage] ?? 2;
+                const worldXg = STAGE_CONFIG.STAGE_POSITIONS[idxG];
+                const vecG = new window.THREE.Vector3(worldXg, 0, 0);
+                vecG.project(camera);
+                const pxg = (vecG.x * 0.5 + 0.5) * rect.width + rect.left;
+                const leftPxRawG = pxg - overlayRect.left;
+                // Do not clamp: align exactly to projected X
+                bottomOverlay.style.setProperty('--triangle-green-left', `${leftPxRawG}px`);
               }
-            } catch (e) {}
-          }
-        } else {
-          // Hide green pointer in current state or overlap case
-          bottomOverlay.classList.remove('green-pointer');
-        }
+            } else {
+              bottomOverlay.classList.remove('green-pointer');
+            }
+          } catch (e) {}
+        });
       }
     } catch (error) {
       console.error('OverlayManager.updateEducationalOverlays error:', error);

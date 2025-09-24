@@ -181,7 +181,7 @@
     content: '';
     position: absolute;
     top: -25px;
-    left: 50%;
+    left: var(--triangle-left, 50%);
     transform: translateX(-50%);
     width: 0;
     height: 0;
@@ -192,24 +192,14 @@
 }
 
 /* Dynamic triangle positioning for different bottlenecks */
-.bottom-overlay.triangle-marketing::before {
-    left: 15% !important;
-}
-
-.bottom-overlay.triangle-sales::before {
-    left: 32.5% !important;
-}
-
-.bottom-overlay.triangle-onboarding::before {
-    left: 50% !important;
-}
-
-.bottom-overlay.triangle-fulfillment::before {
-    left: 67.5% !important;
-}
-
-.bottom-overlay.triangle-retention::before {
-    left: 85% !important;
+.bottom-overlay.triangle-marketing::before,
+.bottom-overlay.triangle-sales::before,
+.bottom-overlay.triangle-onboarding::before,
+.bottom-overlay.triangle-fulfillment::before,
+.bottom-overlay.triangle-retention::before,
+.bottom-overlay::before {
+    left: var(--triangle-left, 50%) !important;
+    transform: translateX(-50%);
 }
 
 .educational-text {

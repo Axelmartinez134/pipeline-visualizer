@@ -447,7 +447,7 @@
     content: '';
     position: absolute;
     top: -25px; /* red pointer */
-    left: 50%;
+    left: var(--triangle-left, 50%);
     transform: translateX(-50%);
     width: 0;
     height: 0;
@@ -475,32 +475,26 @@
 .bottom-overlay.green-pointer::after { display: block; }
 
 /* Dynamic triangle positioning for different bottlenecks */
-.bottom-overlay.triangle-marketing::before {
-    left: 15% !important; /* Point to marketing (far left) */
-}
-
-.bottom-overlay.triangle-sales::before {
-    left: 32.5% !important; /* Point to sales (left-center) */
-}
-
-.bottom-overlay.triangle-onboarding::before {
-    left: 50% !important; /* Point to onboarding (center) - default */
-}
-
-.bottom-overlay.triangle-fulfillment::before {
-    left: 67.5% !important; /* Point to fulfillment (right-center) */
-}
-
-.bottom-overlay.triangle-retention::before {
-    left: 85% !important; /* Point to retention (far right) */
+.bottom-overlay.triangle-marketing::before,
+.bottom-overlay.triangle-sales::before,
+.bottom-overlay.triangle-onboarding::before,
+.bottom-overlay.triangle-fulfillment::before,
+.bottom-overlay.triangle-retention::before,
+.bottom-overlay::before {
+    left: var(--triangle-left, 50%) !important;
+    transform: translateX(-50%);
 }
 
 /* Desktop green pointer positions (percent-based like red) */
-.bottom-overlay.green-triangle-marketing::after { left: 15% !important; }
-.bottom-overlay.green-triangle-sales::after { left: 32.5% !important; }
-.bottom-overlay.green-triangle-onboarding::after { left: 50% !important; }
-.bottom-overlay.green-triangle-fulfillment::after { left: 67.5% !important; }
-.bottom-overlay.green-triangle-retention::after { left: 85% !important; }
+.bottom-overlay.green-triangle-marketing::after,
+.bottom-overlay.green-triangle-sales::after,
+.bottom-overlay.green-triangle-onboarding::after,
+.bottom-overlay.green-triangle-fulfillment::after,
+.bottom-overlay.green-triangle-retention::after,
+.bottom-overlay::after {
+    left: var(--triangle-green-left, 50%) !important;
+    transform: translateX(-50%);
+}
 
 @media (max-width: 768px) {
   /* Mobile: force stage-specific selectors to use the CSS variable so it overrides */
