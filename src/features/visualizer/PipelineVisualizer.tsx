@@ -65,14 +65,13 @@ export default function PipelineVisualizer({ variant = 'main', onReady, onDispos
       {/* Roadmap overlay (shows in optimized mode) */}
       <div id="roadmapOverlay" className="educational-overlay top-overlay hidden">
         <div className="educational-content">
-          <div id="roadmapTitle" className="roadmap-title">Your Next 3 Automations</div>
+          <div id="roadmapTitle" className="roadmap-title">Your Highest‑Priority Constraints</div>
           <div id="roadmapRows" className="roadmap-rows">
             <div id="roadmapRow1" className="roadmap-row">1.</div>
             <div id="roadmapRow2" className="roadmap-row">2.</div>
             <div id="roadmapRow3" className="roadmap-row">3.</div>
           </div>
           <div id="roadmapCTA" className="roadmap-cta hidden">
-            <div className="cta-line">Ready to remove your constraint?</div>
             <button id="roadmapCTAButton" className="cta-btn">Get My Automation Strategy</button>
           </div>
         </div>

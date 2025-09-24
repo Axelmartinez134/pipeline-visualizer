@@ -88,7 +88,7 @@ export class OverlayManager {
             if (!overlap) {
               const fromDisplay = Math.max(0, (from ?? 0) - 10);
               const toDisplay = Math.max(0, (to ?? 0) - 10);
-              capacitySmall.innerHTML = `If you automate <strong><u>${stageNames[stage]}</u></strong>, capacity could grow from ${fromDisplay}/mo to ${toDisplay}/mo`;
+              capacitySmall.innerHTML = `✅ If you automate <strong><u>${stageNames[stage]}</u></strong>, capacity could grow from ${fromDisplay}/mo to ${toDisplay}/mo`;
               capacitySmall.style.color = '#40c057';
               capacitySmall.style.fontWeight = 'normal';
               capacitySmall.style.fontSize = '';

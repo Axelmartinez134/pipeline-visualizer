@@ -102,11 +102,11 @@ export class SceneManager {
     
     switch (quality) {
       case 'low':
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
         this.renderer.shadowMap.enabled = false;
         break;
       case 'medium':
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         break;
       case 'high':

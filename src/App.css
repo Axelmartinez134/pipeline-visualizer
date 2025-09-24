@@ -1075,11 +1075,11 @@
   position: absolute;
   top: 0; left: 0; bottom: 0;
   width: calc(var(--pill-progress, 0) * 100%);
-  background: linear-gradient(90deg, rgba(59,130,246,0.15), rgba(59,130,246,0.25)); /* light blue fill */
+  background: #40c057; /* triangle green solid fill */
   transition: width 0.9s ease;
   z-index: 0;
 }
-.toggle-btn.pill-progress > * { position: relative; z-index: 1; }
+.toggle-btn.pill-progress .pill-label { position: relative; z-index: 1; }
 
 .step-hint { color: #374151; font-size: 12px; }
 .step-hint.done { color: #059669; font-weight: 600; } 

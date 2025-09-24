@@ -118,6 +118,22 @@ function App() {
     return () => button.removeEventListener('click', onNativeClick);
   }, []);
 
+  // Glow the sticky CTA button when 3 optimizations have been applied
+  useEffect(() => {
+    const onStep = (e) => {
+      const step = typeof e.detail?.step === 'number' ? e.detail.step : 0;
+      if (step === 3) {
+        const stickyBtn = document.getElementById('stickyCTAButton');
+        if (stickyBtn) {
+          stickyBtn.classList.add('tutorial-glow');
+          setTimeout(() => stickyBtn.classList.remove('tutorial-glow'), 1700);
+        }
+      }
+    };
+    window.addEventListener('optimization:step', onStep);
+    return () => window.removeEventListener('optimization:step', onStep);
+  }, []);
+
   return (
     <VisualizerProvider>
     <div className="container">
@@ -298,7 +314,7 @@ function ScenarioToggle() {
   }, []);
   const isOptimized = scenario === 'optimized';
   const pillProgress = isOptimized ? step / 3 : 0;
-  const afterLabel = isOptimized ? (step < 3 ? 'Apply Next Automation' : 'Apply Next Automation') : 'See After Automation';
+  const afterLabel = isOptimized ? (step < 3 ? 'Apply Next Automation' : 'Optimization complete') : 'See After Automation';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <button className={`toggle-btn ${!isOptimized ? 'active' : ''}`} data-scenario="current" onClick={() => v.switchScenario('current')}>Current State</button>
@@ -308,18 +324,8 @@ function ScenarioToggle() {
         data-scenario="optimized"
         onClick={() => v.switchScenario('optimized')}
       >
-        {afterLabel}
+        <span className="pill-label">{afterLabel}</span>
       </button>
-      {isOptimized ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {step < 3 ? (
-            <span className="step-hint">{`Step ${step} of 3`}</span>
-          ) : (
-            <span className="step-hint done">All major constraints relieved</span>
-          )}
-          <button className="autoopt-stop" onClick={() => v.switchScenario('current')}>Reset to Current</button>
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -402,21 +408,9 @@ function MobileScenarioSwitcher() {
           data-scenario="optimized"
           onClick={() => { setActive('optimized'); v.switchScenario('optimized'); }}
         >
-          {active === 'optimized' ? (step < 3 ? 'Apply Next Automation' : 'Apply Next Automation') : 'See After Automation'}
+          <span className="pill-label">{active === 'optimized' ? (step < 3 ? 'Apply Next Automation' : 'Optimization complete') : 'See After Automation'}</span>
         </button>
       </div>
-      {active === 'optimized' ? (
-        <div className="autoopt-controls mobile">
-          <div className="autoopt-row">
-            {step < 3 ? (
-              <span className="step-hint" style={{ textAlign: 'center' }}>{`Step ${step} of 3`}</span>
-            ) : (
-              <span className="step-hint done" style={{ textAlign: 'center' }}>All major constraints relieved</span>
-            )}
-            <button className="autoopt-stop" onClick={() => { setActive('current'); v.switchScenario('current'); }}>Reset to Current</button>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -447,7 +441,7 @@ function StickyCTA({ isVisible }) {
     <div className={`sticky-cta-bar ${isVisible ? 'visible' : ''}`}>
       <div className="sticky-cta-content">
         <h4>Ready to Remove Your Constraint?</h4>
-        <button onClick={scrollToForm}>
+        <button id="stickyCTAButton" onClick={scrollToForm}>
           Get My Automation Strategy
         </button>
       </div>

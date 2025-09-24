@@ -6,7 +6,7 @@
 import { STAGE_CONFIG, PIPELINE_CONFIG, BUSINESS_METRICS } from '../constants/businessData.js';
 import { MATERIAL_COLORS } from '../constants/cameraSettings.js';
 import { DeviceDetection } from '../utils/deviceDetection.js';
-import SpriteText from 'three-spritetext';
+import { Text } from 'troika-three-text';
 
 export class Pipeline {
   constructor(scene, businessData) {
@@ -121,25 +121,43 @@ export class Pipeline {
 
   createStageLabel(stage, position) {
     try {
-      // Create sprite text label
-      const label = new SpriteText(this.stageLabels[stage]);
-      
-      // Style the label optimized for distance viewing
-      // Use very high fontSize to maintain sharpness when viewed from far overview
+      // Create crisp SDF text using troika-three-text
+      const label = new Text();
+      label.text = this.stageLabels[stage];
       label.color = '#1E3A8A'; // Brand blue color
-      label.textHeight = 0.4; // Visual size in 3D space  
-      label.fontSize = 300; // Much higher internal resolution for distance clarity
-      label.fontFace = 'Arial, sans-serif'; // Clean, readable font
-      label.fontWeight = 'bold'; // Make text bolder for better visibility
-      
+      label.fontSize = 0.38; // World units height; desktop/base
+      label.font = undefined; // Default sans-serif
+      label.anchorX = 'center';
+      label.anchorY = 'top';
+      label.overflowWrap = 'normal';
+      label.maxWidth = 2.2; // prevent wrapping on narrow screens
+      label.outlineWidth = 0; // no outline by default
+      label.depthTest = true;
+
+      // Mobile-only readability tweaks
+      try {
+        if (DeviceDetection.isMobile()) {
+          label.fontSize = 0.46; // ~+20%
+          label.outlineWidth = 0.015;
+          label.outlineColor = '#ffffff';
+          label.outlineBlur = 0.5;
+          label.letterSpacing = 0.02;
+          label.depthTest = false; // keep on top
+          label.renderOrder = 999;
+        }
+      } catch {}
+
       // Position directly below the pipeline section
-      label.position.set(position, -1.5, 0); // 1.5 units below pipe center
+      const posY = (function(){ try { return DeviceDetection.isMobile() ? -1.6 : -1.5; } catch { return -1.5; } })();
+      label.position.set(position, posY, 0);
       
       // Add to pipeline group and store reference
       this.pipelineGroup.add(label);
       this.labels.push(label);
+      // Ensure SDF glyphs are generated
+      label.sync();
       
-      console.log(`Created distance-optimized label "${this.stageLabels[stage]}" with fontSize: 300`);
+      console.log(`Created crisp SDF label "${this.stageLabels[stage]}" using troika-three-text`);
       
     } catch (error) {
       console.error(`Error creating label for stage ${stage}:`, error);
