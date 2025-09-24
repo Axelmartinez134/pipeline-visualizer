@@ -190,24 +190,18 @@ function App() {
             <StageSlider stage="retention" defaultValue={25} />
           </div>
         </div>
-        <div className="simulation-controls">
-          {!isMobile ? <PlayPause /> : null}
-          
-          {!isMobile ? (
+        {!isMobile ? (
+          <div className="simulation-controls">
+            <PlayPause />
             <div className="zoom-controls">
               <ZoomButtons />
             </div>
-          ) : null}
-          
-          {!isMobile ? (
-            <>
-              <div className="scenario-toggle">
-                <ScenarioToggle />
-              </div>
-              <AutoOptimizeControls />
-            </>
-          ) : null}
-        </div>
+            <div className="scenario-toggle">
+              <ScenarioToggle />
+            </div>
+            <AutoOptimizeControls />
+          </div>
+        ) : null}
       </PipelineVisualizer>
 
       <ProcessAnalysis selectedProcess="overview" />
