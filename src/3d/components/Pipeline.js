@@ -44,9 +44,9 @@ export class Pipeline {
     this.scene.add(this.pipelineGroup);
   }
 
-  create() {
+  create(preserveLabels = false) {
     try {
-      this.clear();
+      this.clear(preserveLabels);
       
       const stages = STAGE_CONFIG.STAGES;
       const stagePositions = STAGE_CONFIG.STAGE_POSITIONS;
@@ -69,6 +69,13 @@ export class Pipeline {
           this.createConnector(stagePositions[index]);
         }
       });
+
+      // Create labels once and keep them persistent across rebuilds
+      if (this.labels.length === 0) {
+        stages.forEach((stage, index) => {
+          this.createStageLabel(stage, stagePositions[index]);
+        });
+      }
 
       return stagePositions; // Return positions for thought bubble creation
     } catch (error) {
@@ -249,34 +256,36 @@ export class Pipeline {
     });
   }
 
-  clear() {
-    // Remove all pipeline elements
+  clear(preserveLabels = false) {
+    // Remove all pipeline elements except labels when preserving
     [...this.pipes, ...this.waterFlows, ...this.connectors].forEach(element => {
       this.pipelineGroup.remove(element);
       if (element.geometry) element.geometry.dispose();
       if (element.material) element.material.dispose();
     });
     
-    // Remove and dispose labels
-    this.labels.forEach(label => {
-      this.pipelineGroup.remove(label);
-      if (label.dispose) label.dispose();
-    });
+    // Remove and dispose labels only if not preserving
+    if (!preserveLabels) {
+      this.labels.forEach(label => {
+        this.pipelineGroup.remove(label);
+        if (label.dispose) label.dispose();
+      });
+      this.labels = [];
+    }
     
     this.pipes = [];
     this.waterFlows = [];
     this.connectors = [];
-    this.labels = [];
   }
 
   updateStage(stage, value) {
     this.businessData[stage] = parseInt(value);
-    return this.create(); // Recreate and return positions
+    return this.create(true); // Recreate geometry only; preserve labels
   }
 
   toggleSimulation() {
     this.isSimulating = !this.isSimulating;
-    return this.create(); // Recreate with/without water flow
+    return this.create(true); // Recreate with/without water flow, preserve labels
   }
 
   switchScenario(scenario) {
@@ -326,7 +335,7 @@ export class Pipeline {
       this.normFrozen = false;
     }
     
-    return this.create(); // Recreate with new scenario
+    return this.create(true); // Rebuild geometry only, keep labels
   }
 
   // Apply an additional optimization step while already in optimized scenario
@@ -346,7 +355,7 @@ export class Pipeline {
     this.businessData[bottleneckStage] = target;
 
     this.lastImprovement = { stage: bottleneckStage, from: currentValue, to: target };
-    this.create();
+    this.create(true);
     return bottleneckStage;
   }
 

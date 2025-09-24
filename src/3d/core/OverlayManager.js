@@ -100,9 +100,9 @@ export class OverlayManager {
             constraintIndicator.style.color = '#DC2626';
             constraintIndicator.style.fontWeight = 'normal';
           } else {
-            // Current state: only red bottleneck line; no improvement line
+            // Current state: only red constraint line; no improvement line
             capacitySmall.textContent = '';
-            constraintIndicator.innerHTML = `👆 <strong id="constraintStageText"><u>${stageNames[bottleneckStage]}</u></strong> is your bottleneck limiting your current growth`;
+            constraintIndicator.innerHTML = `👆 <strong id="constraintStageText"><u>${stageNames[bottleneckStage]}</u></strong> is your constraint limiting your current growth`;
             constraintIndicator.style.color = '';
             constraintIndicator.style.fontWeight = 'normal';
           }
@@ -195,11 +195,23 @@ export class OverlayManager {
     if (bottomOverlay) bottomOverlay.classList.remove('hidden');
   }
 
+  showBottomOverlayOnly() {
+    const topOverlay = document.getElementById('educationalTopOverlay');
+    const bottomOverlay = document.getElementById('educationalBottomOverlay');
+    if (topOverlay) topOverlay.classList.add('hidden');
+    if (bottomOverlay) bottomOverlay.classList.remove('hidden');
+  }
+
   hideEducationalOverlays() {
     const topOverlay = document.getElementById('educationalTopOverlay');
     const bottomOverlay = document.getElementById('educationalBottomOverlay');
     if (topOverlay) topOverlay.classList.add('hidden');
     if (bottomOverlay) bottomOverlay.classList.add('hidden');
+  }
+
+  hideTopOverlayOnly() {
+    const topOverlay = document.getElementById('educationalTopOverlay');
+    if (topOverlay) topOverlay.classList.add('hidden');
   }
 
   showRoadmapOverlay() {

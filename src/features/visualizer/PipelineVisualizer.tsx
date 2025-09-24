@@ -83,7 +83,7 @@ export default function PipelineVisualizer({ variant = 'main', onReady, onDispos
             <>
               <div id="constraintCapacitySmall" className="constraint-capacity-small"></div>
               <div id="constraintIndicator" className="constraint-indicator">
-                👆 <strong id="constraintStageText">Onboarding</strong> is your bottleneck limiting your current growth
+                👆 <strong id="constraintStageText">Onboarding</strong> is your constraint limiting your current growth
               </div>
               <div id="constraintCTA" className="educational-cta">
                 <strong>Click the tabs above to explore automation solutions</strong>

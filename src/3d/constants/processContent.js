@@ -6,43 +6,43 @@
 // Thought bubble content for each process
 export const THOUGHT_BUBBLE_CONTENT = {
   leadGen: {
-    title: "🎯 Marketing Automations",
+    title: "🎯 Marketing: Predictable leads, not lucky spikes. Capture, enrich, and route automatically.",
     previews: [
-      { icon: "📧", text: "Email nurture sequences" },
-      { icon: "🤖", text: "Lead scoring bot" },
-      { icon: "📱", text: "Social media scheduler" }
+      { icon: "⚙️", text: "Capture → Enrich → Route" },
+      { icon: "📧", text: "Behavior‑based nurture" },
+      { icon: "🤖", text: "Lead scoring & de‑dupe" }
     ]
   },
   qualification: {
-    title: "📞 Sales Automations",
+    title: "📞 Sales: Frictionless conversions, fewer drop‑offs. Auto‑qualify, schedule, and follow up.",
     previews: [
-      { icon: "💬", text: "Qualification chatbot" },
-      { icon: "📅", text: "Auto-booking system" },
-      { icon: "📧", text: "Follow-up sequences" }
+      { icon: "💬", text: "AI pre‑qualification" },
+      { icon: "📅", text: "Auto‑booking + reminders" },
+      { icon: "🔁", text: "Smart follow‑ups" }
     ]
   },
   onboarding: {
-    title: "🚨 Critical Bottleneck!",
+    title: "🚀 Onboarding: Day‑1 starts, not week‑2 waits. Kickoff, docs, and access in minutes.",
     previews: [
-      { icon: "📝", text: "Automated intake forms" },
-      { icon: "📂", text: "Document collection" },
-      { icon: "🎉", text: "Welcome automation" }
+      { icon: "📝", text: "Intake & e‑signature" },
+      { icon: "📂", text: "Docs & access setup" },
+      { icon: "⏱️", text: "Go‑live faster" }
     ]
   },
   delivery: {
-    title: "⚡ Fulfillment Tools",
+    title: "⚙️ Fulfillment: Reliable delivery at demand. Assign, track, and unblock work on time.",
     previews: [
-      { icon: "📅", text: "Session scheduling" },
-      { icon: "📊", text: "Progress tracking" },
-      { icon: "📚", text: "Resource delivery" }
+      { icon: "🧭", text: "Auto‑assign & SLA cues" },
+      { icon: "📊", text: "Progress & blockers" },
+      { icon: "🔔", text: "On‑time nudges" }
     ]
   },
   retention: {
-    title: "🔄 Retention Systems",
+    title: "🔁 Retention: Longer LTV, calmer ops. Health checks, save plays, and renewals on cue.",
     previews: [
-      { icon: "✅", text: "Success check-ins" },
-      { icon: "🔔", text: "Renewal campaigns" },
-      { icon: "⭐", text: "Feedback automation" }
+      { icon: "❤️", text: "Health scoring & alerts" },
+      { icon: "🛟", text: "Save plays & offers" },
+      { icon: "📈", text: "Renewals & expansions" }
     ]
   }
 };

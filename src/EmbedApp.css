@@ -141,6 +141,7 @@
 
 .embed-app-wrapper .top-overlay {
     top: 100px !important;
+    width: 395px; /* match main app */
 }
 
 .bottom-overlay {
@@ -329,6 +330,7 @@
         max-width: 320px;
         min-width: 290px;
     }
+    .embed-app-wrapper .top-overlay { width: 320px; }
     
     .educational-content {
         padding: 12px 16px;

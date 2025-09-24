@@ -139,7 +139,7 @@ function App() {
     <div className="container">
       <div className="header">
         <h1>Find the Constraint That Caps Your Growth</h1>
-        <p>A Theory‑of‑Constraints visualizer with AI‑informed automation roadmaps. Predictable, evidence‑based improvements—delivered within 24 hours after submission.</p>
+        <p>Stop guessing: find your constraint and get an AI‑backed Automation roadmap that unlocks predictable growth—delivered in 24 hours.</p>
       </div>
 
       <div className="tabs">
@@ -207,8 +207,8 @@ function App() {
       <ProcessAnalysis selectedProcess="overview" />
 
       <div className="lead-capture" ref={leadCaptureRef}>
-        <h3>Ready to Automate Your Pipeline?</h3>
-        <p>Get a personalized automation strategy for your coaching business</p>
+        <h3>Your Constraint‑First Growth Automation Strategy</h3>
+        <p>Your answers from the Pipeline and Form below will be used to craft a personalized, constraint-first automation strategy, delivered within 24 hours.</p>
         
         <form id="leadForm" className="lead-form">
           <div className="form-row">
@@ -222,7 +222,7 @@ function App() {
           </div>
 
           <div className="form-row">
-            <input type="text" id="industry" placeholder="Your Industry (e.g., Life Coaching, Marketing Agency, etc.)" required />
+            <input type="text" id="industry" placeholder="Your Industry (e.g., Agency, B2B Services, eCom)" required />
             <select id="companySize" required>
               <option value="">How many employees?</option>
               <option value="solo">Just me (Solo)</option>

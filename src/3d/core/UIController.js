@@ -45,37 +45,38 @@ export class UIController {
     // Tutorial content
     this.TUTORIAL_STEPS = {
       0: {
-        title: "🎯 Find Your Bottleneck",
-        content: "Find bottlenecks limiting your business growth.<br><strong>Theory of Constraints</strong> made visual!",
+        title: "🎯 Find Your Constraint",
+        content: "START HERE",
         cta: "Start Tutorial",
         showClickMe: true
       },
       1: {
-        title: "🔍 Your 3D Business Pipeline",
-        content: "Each pipe = business stage.<br><strong>Thicker pipes = higher capacity</strong>",
-        cta: "Next: Try the Controls",
-        showClickMe: true,
-        highlightPipeline: true
-      },
-      2: {
         title: "📊 Interactive Capacity Controls",
-        content: "Move sliders to change your pipeline.<br><strong>Thinner pipes</strong> = constraints!",
-        cta: "Next: Find Your Bottleneck",
+        content: "Move sliders (below) to adjust your pipeline.",
+        cta: "Next: Explore Each Stage",
         showClickMe: true,
         highlightSliders: true
       },
+      2: {
+        title: "🚀 Press ‘See After Automation’",
+        content: "Press \"See After Automation\".<br>We’ll map your top 3 constraints in order.",
+        cta: "Next: Spot Your Constraint",
+        showClickMe: true,
+        highlightScenarioButton: true
+      },
       3: {
-        title: "🚨 Spotting Your Business Bottleneck",
+        title: "🔎 Spotting Your Constraint",
         content: "The <strong style='color: #DC2626'>red section</strong> is your constraint.<br>It limits your entire business flow!",
-        cta: "Next: See Your Impact",
+        cta: "Next: Try the Controls",
         showClickMe: true,
         highlightBottomBox: true
       },
       4: {
-        title: "🚀 Explore Each Stage",
-        content: "Explore each stage up close! Click any tab to zoom in and discover <strong>stage-specific AI automation improvements</strong>.",
-        cta: "Finish Tutorial",
+        title: "🧭 Explore Each Stage",
+        content: "Click any tab to zoom in and see stage‑specific automation previews.",
+        cta: "End Tutorial",
         showClickMe: false,
+        endTutorialButton: true,
         highlightTabs: true
       }
     };
@@ -120,8 +121,8 @@ export class UIController {
     this.revertScenarioIfOptimized();
     // Handle tutorial behavior based on step and selected process
     if (this.tutorialState.isActive && !this.tutorialState.completed) {
-      if (this.tutorialState.currentStep === 4) {
-        // Step 5 (final step): Complete tutorial on any tab click
+      if (this.tutorialState.currentStep >= this.tutorialState.maxSteps) {
+        // Final step: Complete tutorial on any tab click
         console.log('🎉 TAB CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
         this.tutorialManager.completeTutorial();
       } else if (processId !== 'overview') {
@@ -129,11 +130,11 @@ export class UIController {
         console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Hiding overlays for ${processId} navigation`);
         this.overlayManager.hideEducationalOverlays();
              } else {
-         // Returning to overview: Show tutorial overlays at same step
-         console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Returning to overview, showing overlays`);
-         this.tutorialManager.updateTutorialOverlays(); // Ensure tutorial content is displayed
-         this.overlayManager.showEducationalOverlays();
-       }
+        // Returning to overview: Show tutorial overlays at same step
+        console.log(`📖 Tutorial Step ${this.tutorialState.currentStep + 1}: Returning to overview, showing overlays`);
+        this.tutorialManager.updateTutorialOverlays(); // Ensure tutorial content is displayed
+        this.overlayManager.showEducationalOverlays();
+      }
     }
 
     // Prevent rapid clicking and transition conflicts
@@ -345,8 +346,8 @@ export class UIController {
 
   // Switch between current and optimized scenarios
   switchScenario(scenario) {
-    // Complete tutorial if on step 4 and tutorial is active (final step only)
-    if (this.tutorialState.isActive && this.tutorialState.currentStep === 4) {
+    // Complete tutorial if on final step and tutorial is active
+    if (this.tutorialState.isActive && this.tutorialState.currentStep >= this.tutorialState.maxSteps) {
       console.log('🎉 SCENARIO TOGGLE CLICKED ON FINAL STEP - COMPLETING TUTORIAL!');
       this.tutorialManager.completeTutorial();
       return;
@@ -961,6 +962,10 @@ export class UIController {
   // Update process content panel
   updateProcessContent(processId) {
     try {
+      // Keep React-driven Overview replacement intact
+      if (processId === 'overview') {
+        return;
+      }
       const process = PROCESS_AUTOMATIONS[processId];
       if (!process) {
         console.error('No process automation found for:', processId);

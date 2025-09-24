@@ -7,6 +7,24 @@ export default function ProcessAnalysis({ selectedProcess = 'overview' }) {
   const statusIcon = process.status === 'bottleneck' ? '🚨' : process.status === 'optimization' ? '⚡' : process.status === 'secondary' ? '📊' : ''
   const statusClass = process.status === 'bottleneck' ? 'status-bottleneck' : process.status === 'optimization' ? 'status-optimization' : process.status === 'secondary' ? 'status-secondary' : ''
 
+  // Overview replacement: Deliverables only
+  if (selectedProcess === 'overview') {
+    return (
+      <div id="processAnalysis" className="analysis-section overview-replace">
+        <section className="deliverable-card">
+          <h3>What You’ll Receive in 24 Hours</h3>
+          <ul className="deliverable-list">
+            <li>Primary constraint identified with clear rationale</li>
+            <li>Your Top 3 Constraints to Remove</li>
+            <li>AI‑informed automations mapped to your stack</li>
+            <li>Next‑step playbook to execute</li>
+          </ul>
+          <button className="cta-btn" onClick={scrollToForm}>Get My Automation Strategy</button>
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div id="processAnalysis" className="analysis-section">
       <div className="process-header">
@@ -51,6 +69,11 @@ export default function ProcessAnalysis({ selectedProcess = 'overview' }) {
       </div>
     </div>
   )
+}
+
+function scrollToForm() {
+  const el = document.querySelector('.lead-capture')
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function showAutomationDetails(title) {

@@ -14,6 +14,10 @@ export class TutorialManager {
 
   initializeTutorial() {
     if (this.ui.tutorialState.isActive) {
+      // If entering final step, ensure we're on overview
+      if (this.ui.tutorialState.currentStep === this.ui.tutorialState.maxSteps) {
+        try { this.ui.sceneManager.selectProcess('overview'); } catch {}
+      }
       this.updateTutorialOverlays();
       this.ui.overlayManager.showEducationalOverlays();
       this.setupTutorialClickHandlers();
@@ -23,6 +27,7 @@ export class TutorialManager {
       if (currentStep.highlightBottomBox) this.highlightBottomBox();
       if (currentStep.highlightTabs) this.highlightTabs();
       if (currentStep.highlightPipeline) this.highlightPipeline();
+      if (currentStep.highlightScenarioButton) this.highlightScenarioButton();
     }
   }
 
@@ -32,6 +37,9 @@ export class TutorialManager {
     if (this.ui.tutorialState.currentStep < this.ui.tutorialState.maxSteps) {
       this.removeTutorialHighlights();
       this.ui.tutorialState.currentStep++;
+      if (this.ui.tutorialState.currentStep === this.ui.tutorialState.maxSteps) {
+        try { this.ui.sceneManager.selectProcess('overview'); } catch {}
+      }
       this.updateTutorialOverlays();
       this.setupTutorialClickHandlers();
 
@@ -40,6 +48,7 @@ export class TutorialManager {
       if (step.highlightBottomBox) this.highlightBottomBox();
       if (step.highlightTabs) this.highlightTabs();
       if (step.highlightPipeline) this.highlightPipeline();
+      if (step.highlightScenarioButton) this.highlightScenarioButton();
     } else {
       this.completeTutorial();
     }
@@ -48,12 +57,10 @@ export class TutorialManager {
   completeTutorial() {
     this.ui.tutorialState.completed = true;
     this.ui.tutorialState.isActive = false;
-    this.ui.overlayManager.hideEducationalOverlays();
+    // Hide only the top overlay so the bottom remains per scenario
+    this.ui.overlayManager.hideTopOverlayOnly();
     this.removeTutorialHighlights();
-    setTimeout(() => {
-      this.ui.overlayManager.updateEducationalOverlays();
-      this.ui.overlayManager.showEducationalOverlays();
-    }, 300);
+    // Do not auto re-show the top overlay; normal overlay updates happen via UI state
   }
 
   updateTutorialOverlays() {
@@ -64,16 +71,32 @@ export class TutorialManager {
     const content = topOverlay.querySelector('.educational-content');
     if (content) {
       content.innerHTML = `
-        <span class="educational-text">
-          <div style="margin-bottom: 8px;">
-            <span class="step-counter">Step ${this.ui.tutorialState.currentStep + 1} of ${this.ui.tutorialState.maxSteps + 1}</span>
-          </div>
-          <strong style="font-size: 1.1rem; color: #1E3A8A; display: block; margin-bottom: 8px;">${step.title}</strong>
-          <span style="font-size: 0.95rem; line-height: 1.4;">${step.content}</span>
-          ${step.showClickMe ? '<div class="click-me-indicator">👆 ' + step.cta + '</div>' : ''}
-        </span>
+        <div style="position: relative;">
+          <button id="tutorialCloseBtn" aria-label="Close tutorial" style="position:absolute; top:8px; right:8px; background:transparent; border:none; font-size:18px; cursor:pointer; color:#374151">×</button>
+          <span class="educational-text">
+            <div style="margin-bottom: 8px;">
+              <span class="step-counter">Step ${this.ui.tutorialState.currentStep + 1} of ${this.ui.tutorialState.maxSteps + 1}</span>
+            </div>
+            <strong style="font-size: 1.1rem; color: #1E3A8A; display: block; margin-bottom: 8px;">${step.title}</strong>
+            <div style="font-size: 0.95rem; line-height: 1.4; margin-bottom: 8px;">${step.content}</div>
+            ${step.showClickMe ? '<div class="click-me-indicator">👆 ' + step.cta + '</div>' : ''}
+            ${step.endTutorialButton ? '<div style="margin-top:10px;"><button id="tutorialEndBtn" class="secondary-btn">End Tutorial</button></div>' : ''}
+          </span>
+        </div>
       `;
+      const closeBtn = content.querySelector('#tutorialCloseBtn');
+      if (closeBtn) closeBtn.onclick = () => this.completeTutorial();
+      const endBtn = content.querySelector('#tutorialEndBtn');
+      if (endBtn) endBtn.onclick = () => this.completeTutorial();
     }
+    // Enforce consistent width across all steps (inline overrides any embed styles)
+    try {
+      const isMobile = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+      const w = isMobile ? '355px' : '395px';
+      topOverlay.style.width = w;
+      topOverlay.style.maxWidth = w;
+      topOverlay.style.minWidth = isMobile ? '315px' : '355px';
+    } catch {}
     if (step.showClickMe) topOverlay.classList.add('tutorial-glow');
     else topOverlay.classList.remove('tutorial-glow');
   }
@@ -176,6 +199,20 @@ export class TutorialManager {
     });
     setTimeout(() => {
       glowMeshes.forEach(m => { this.ui.sceneManager.pipeline.pipelineGroup.remove(m); m.geometry.dispose(); m.material.dispose(); });
+    }, 3000);
+  }
+
+  highlightScenarioButton() {
+    // Desktop pill
+    const desktopPill = document.querySelector('.scenario-toggle .toggle-btn[data-scenario="optimized"]');
+    if (desktopPill) desktopPill.classList.add('tutorial-glow');
+    // Mobile pill
+    const mobilePill = document.querySelector('.mobile-scenario-switcher .toggle-btn[data-scenario="optimized"]');
+    if (mobilePill) mobilePill.classList.add('tutorial-glow');
+    // Auto remove after a few seconds to avoid lingering
+    setTimeout(() => {
+      if (desktopPill) desktopPill.classList.remove('tutorial-glow');
+      if (mobilePill) mobilePill.classList.remove('tutorial-glow');
     }, 3000);
   }
 
