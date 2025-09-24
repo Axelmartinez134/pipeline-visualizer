@@ -5,11 +5,11 @@
 
 // Coaching/Consulting Industry Realistic Defaults
 export const DEFAULT_BUSINESS_DATA = {
-  leadGen: 90,         // leads/month - display 80, internal 90
-  qualification: 45,   // qualified prospects/month - display 35, internal 45
-  onboarding: 25,      // new clients/month - display 15, internal 25 (bottleneck)
-  delivery: 60,        // client capacity/month - display 50, internal 60
-  retention: 35        // retained clients/month - display 25, internal 35
+  leadGen: 60,         // leads/month - display 50, internal 60
+  qualification: 50,   // qualified prospects/month - display 40, internal 50
+  onboarding: 40,      // new clients/month - display 30, internal 40
+  delivery: 30,        // client capacity/month - display 20, internal 30
+  retention: 30        // retained clients/month - display 20, internal 30
 };
 
 // Stage configuration

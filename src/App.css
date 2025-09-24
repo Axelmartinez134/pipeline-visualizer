@@ -446,16 +446,33 @@
 .bottom-overlay::before {
     content: '';
     position: absolute;
-    top: -25px; /* Made taller - was -20px */
+    top: -25px; /* red pointer */
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
     border-left: 15px solid transparent;
     border-right: 15px solid transparent;
-    border-bottom: 25px solid #DC2626; /* Made taller and red - was 20px white */
+    border-bottom: 25px solid #DC2626; /* red */
     transition: left 0.3s ease, transform 0.3s ease;
 }
+
+/* Second pointer for improved (green) stage */
+.bottom-overlay::after {
+    content: '';
+    position: absolute;
+    top: -25px; /* align vertically with red pointer */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 25px solid #40c057; /* green */
+    transition: left 0.3s ease, transform 0.3s ease;
+    display: none; /* hidden unless green-pointer class is present */
+}
+
+.bottom-overlay.green-pointer::after { display: block; }
 
 /* Dynamic triangle positioning for different bottlenecks */
 .bottom-overlay.triangle-marketing::before {
@@ -476,6 +493,34 @@
 
 .bottom-overlay.triangle-retention::before {
     left: 85% !important; /* Point to retention (far right) */
+}
+
+/* Desktop green pointer positions (percent-based like red) */
+.bottom-overlay.green-triangle-marketing::after { left: 15% !important; }
+.bottom-overlay.green-triangle-sales::after { left: 32.5% !important; }
+.bottom-overlay.green-triangle-onboarding::after { left: 50% !important; }
+.bottom-overlay.green-triangle-fulfillment::after { left: 67.5% !important; }
+.bottom-overlay.green-triangle-retention::after { left: 85% !important; }
+
+@media (max-width: 768px) {
+  /* Mobile: force stage-specific selectors to use the CSS variable so it overrides */
+  .bottom-overlay.triangle-marketing::before,
+  .bottom-overlay.triangle-sales::before,
+  .bottom-overlay.triangle-onboarding::before,
+  .bottom-overlay.triangle-fulfillment::before,
+  .bottom-overlay.triangle-retention::before {
+    left: var(--triangle-left, 50%) !important;
+    transform: translateX(-50%);
+  }
+  .bottom-overlay.green-triangle-marketing::after,
+  .bottom-overlay.green-triangle-sales::after,
+  .bottom-overlay.green-triangle-onboarding::after,
+  .bottom-overlay.green-triangle-fulfillment::after,
+  .bottom-overlay.green-triangle-retention::after,
+  .bottom-overlay::after {
+    left: var(--triangle-green-left, 50%) !important;
+    transform: translateX(-50%);
+  }
 }
 
 .educational-text {
@@ -985,3 +1030,85 @@
 /* Disabled state while sequence running */
 .sequence-running .tab.disabled { pointer-events: none; opacity: 0.6; }
 .sequence-running .slider[disabled] { opacity: 0.6; } 
+
+@media (max-width: 768px) {
+  .mobile-scenario-switcher { display: block; margin: 8px 0 12px 0; }
+  .mobile-toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+  .mobile-scenario-switcher .toggle-btn { width: 100%; }
+  .autoopt-controls.mobile { display: block; width: 100%; margin-top: 10px; }
+  .autoopt-controls.mobile .autoopt-row { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  .autoopt-controls.mobile .autoopt-btn { width: 100%; }
+  .autoopt-controls.mobile .autoopt-stop { align-self: center; }
+} 
+
+/* One-time, slower gold glow for Auto-Optimize button */
+.autoopt-once-glow {
+  animation: autooptGlow 1.6s ease-out 1;
+}
+
+@keyframes autooptGlow {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 193, 7, 0);
+    filter: brightness(100%);
+  }
+  20% {
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.25), 0 0 20px rgba(255, 193, 7, 0.2);
+    filter: brightness(103%);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(255, 193, 7, 0.55), 0 0 28px rgba(255, 193, 7, 0.45);
+    filter: brightness(106%);
+  }
+  100% {
+    box-shadow: none;
+    filter: brightness(100%);
+  }
+} 
+
+/* Pill progress styling for After Automation button */
+.toggle-btn.pill-progress {
+  position: relative;
+  overflow: hidden;
+}
+.toggle-btn.pill-progress::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: calc(var(--pill-progress, 0) * 100%);
+  background: linear-gradient(90deg, rgba(59,130,246,0.15), rgba(59,130,246,0.25)); /* light blue fill */
+  transition: width 0.9s ease;
+  z-index: 0;
+}
+.toggle-btn.pill-progress > * { position: relative; z-index: 1; }
+
+.step-hint { color: #374151; font-size: 12px; }
+.step-hint.done { color: #059669; font-weight: 600; } 
+
+/* Roadmap panel (educational bubble style) */
+.roadmap-panel {
+  position: relative;
+  max-width: 600px;
+  margin: 10px auto 14px auto;
+  background: white;
+  border-radius: 20px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.roadmap-panel::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 12px solid white;
+}
+.roadmap-title { text-align: center; font-weight: 700; color: #1E3A8A; margin-bottom: 8px; }
+.roadmap-rows { display: grid; gap: 6px; }
+.roadmap-row { color: #374151; font-weight: 600; text-align: center; }
+.roadmap-cta { margin-top: 10px; text-align: center; }
+.roadmap-cta .cta-line { color: #374151; font-weight: 600; margin-bottom: 6px; }
+.roadmap-cta .cta-btn { background: linear-gradient(45deg, #1E3A8A, #374151); color: #fff; border: none; padding: 10px 18px; border-radius: 20px; font-weight: 700; }
+.roadmap-cta .cta-btn.tutorial-glow { animation: autooptGlow 1.6s ease-out 1; } 

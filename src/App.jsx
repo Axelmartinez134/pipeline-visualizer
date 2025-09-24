@@ -132,12 +132,7 @@ function App() {
 
       <PipelineVisualizer>
         {isMobile ? <MobileScenarioSwitcher /> : null}
-        {/* Overlay progress inside render area */}
-        <div className="render-progress">
-          <div id="renderProgressBarFill" className="render-progress-fill" />
-          <span className="render-progress-tick" style={{ left: '33.33%' }} />
-          <span className="render-progress-tick" style={{ left: '66.66%' }} />
-        </div>
+        {/* Pill carries progress; render-progress bar removed */}
         <div className="capacity-controls">
           <div className="slider-group">
             <div className="slider-header">
@@ -286,11 +281,46 @@ function ZoomButtons() {
 
 function ScenarioToggle() {
   const v = useVisualizer();
+  const [scenario, setScenario] = useState('current');
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const onScenario = (e) => {
+      setScenario(e.detail?.scenario || 'current');
+      if (typeof e.detail?.stepCount === 'number') setStep(Math.min(3, e.detail.stepCount));
+    };
+    const onStep = (e) => setStep(Math.min(3, e.detail?.step || 0));
+    window.addEventListener('scenario:changed', onScenario);
+    window.addEventListener('optimization:step', onStep);
+    return () => {
+      window.removeEventListener('scenario:changed', onScenario);
+      window.removeEventListener('optimization:step', onStep);
+    };
+  }, []);
+  const isOptimized = scenario === 'optimized';
+  const pillProgress = isOptimized ? step / 3 : 0;
+  const afterLabel = isOptimized ? (step < 3 ? 'Apply Next Automation' : 'Apply Next Automation') : 'See After Automation';
   return (
-    <>
-      <button className="toggle-btn active" data-scenario="current" onClick={() => v.switchScenario('current')}>Current State</button>
-      <button className="toggle-btn" data-scenario="optimized" onClick={() => v.switchScenario('optimized')}>After Automation</button>
-    </>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <button className={`toggle-btn ${!isOptimized ? 'active' : ''}`} data-scenario="current" onClick={() => v.switchScenario('current')}>Current State</button>
+      <button
+        className={`toggle-btn pill-progress ${isOptimized ? 'active' : ''}`}
+        style={{ ['--pill-progress']: pillProgress }}
+        data-scenario="optimized"
+        onClick={() => v.switchScenario('optimized')}
+      >
+        {afterLabel}
+      </button>
+      {isOptimized ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {step < 3 ? (
+            <span className="step-hint">{`Step ${step} of 3`}</span>
+          ) : (
+            <span className="step-hint done">All major constraints relieved</span>
+          )}
+          <button className="autoopt-stop" onClick={() => v.switchScenario('current')}>Reset to Current</button>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -337,10 +367,24 @@ function MobileScenarioSwitcher() {
   const v = useVisualizer();
   const [active, setActive] = useState('current');
   const [running, setRunning] = useState(false);
+  const [step, setStep] = useState(0);
   useEffect(() => {
     const onState = (e) => setRunning(!!e.detail?.running);
     window.addEventListener('autoopt:state', onState);
     return () => window.removeEventListener('autoopt:state', onState);
+  }, []);
+  useEffect(() => {
+    const onScenario = (e) => {
+      setActive(e.detail?.scenario || 'current');
+      if (typeof e.detail?.stepCount === 'number') setStep(Math.min(3, e.detail.stepCount));
+    };
+    const onStep = (e) => setStep(Math.min(3, e.detail?.step || 0));
+    window.addEventListener('scenario:changed', onScenario);
+    window.addEventListener('optimization:step', onStep);
+    return () => {
+      window.removeEventListener('scenario:changed', onScenario);
+      window.removeEventListener('optimization:step', onStep);
+    };
   }, []);
   return (
     <div className="mobile-scenario-switcher">
@@ -353,27 +397,23 @@ function MobileScenarioSwitcher() {
           Current State
         </button>
         <button
-          className={`toggle-btn ${active === 'optimized' ? 'active' : ''}`}
+          className={`toggle-btn pill-progress ${active === 'optimized' ? 'active' : ''}`}
+          style={{ ['--pill-progress']: (active === 'optimized' ? step / 3 : 0) }}
           data-scenario="optimized"
           onClick={() => { setActive('optimized'); v.switchScenario('optimized'); }}
         >
-          After Automation
+          {active === 'optimized' ? (step < 3 ? 'Apply Next Automation' : 'Apply Next Automation') : 'See After Automation'}
         </button>
       </div>
       {active === 'optimized' ? (
         <div className="autoopt-controls mobile">
           <div className="autoopt-row">
-            <button
-              className="autoopt-btn"
-              disabled={running}
-              aria-pressed={running}
-              onClick={() => v.startAutoOptimizeSequence && v.startAutoOptimizeSequence()}
-            >
-              Auto-Optimize (x3)
-            </button>
-            {running ? (
-              <button className="autoopt-stop" onClick={() => v.stopAutoOptimizeSequence && v.stopAutoOptimizeSequence()}>Stop</button>
-            ) : null}
+            {step < 3 ? (
+              <span className="step-hint" style={{ textAlign: 'center' }}>{`Step ${step} of 3`}</span>
+            ) : (
+              <span className="step-hint done" style={{ textAlign: 'center' }}>All major constraints relieved</span>
+            )}
+            <button className="autoopt-stop" onClick={() => { setActive('current'); v.switchScenario('current'); }}>Reset to Current</button>
           </div>
         </div>
       ) : null}

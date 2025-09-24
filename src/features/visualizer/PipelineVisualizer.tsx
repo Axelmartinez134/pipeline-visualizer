@@ -61,14 +61,32 @@ export default function PipelineVisualizer({ variant = 'main', onReady, onDispos
           )}
         </div>
       </div>
+
+      {/* Roadmap overlay (shows in optimized mode) */}
+      <div id="roadmapOverlay" className="educational-overlay top-overlay hidden">
+        <div className="educational-content">
+          <div id="roadmapTitle" className="roadmap-title">Your Next 3 Automations</div>
+          <div id="roadmapRows" className="roadmap-rows">
+            <div id="roadmapRow1" className="roadmap-row">1.</div>
+            <div id="roadmapRow2" className="roadmap-row">2.</div>
+            <div id="roadmapRow3" className="roadmap-row">3.</div>
+          </div>
+          <div id="roadmapCTA" className="roadmap-cta hidden">
+            <div className="cta-line">Ready to remove your constraint?</div>
+            <button id="roadmapCTAButton" className="cta-btn">Get My Automation Strategy</button>
+          </div>
+        </div>
+      </div>
+
       <div id="educationalBottomOverlay" className="educational-overlay bottom-overlay hidden">
         <div className="educational-content">
           {variant === 'main' ? (
             <>
-              <div className="constraint-indicator">
-                👆 <strong id="constraintStageText">Onboarding</strong> is your bottleneck limiting you to <strong id="constraintRevenueText">$75,000</strong> ARR
+              <div id="constraintCapacitySmall" className="constraint-capacity-small"></div>
+              <div id="constraintIndicator" className="constraint-indicator">
+                👆 <strong id="constraintStageText">Onboarding</strong> is your bottleneck limiting your current growth
               </div>
-              <div className="educational-cta">
+              <div id="constraintCTA" className="educational-cta">
                 <strong>Click the tabs above to explore automation solutions</strong>
               </div>
             </>

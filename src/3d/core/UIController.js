@@ -30,6 +30,10 @@ export class UIController {
     this.sequenceStepMs = 3000; // per step
     this.sequenceTotalMs = 9000; // 3 steps
 
+    // Optimization step tracking (for manual presses)
+    this.optimizationStepCount = 0;
+    this.optimizationMaxSteps = 3;
+
     // Tutorial system
     this.tutorialState = {
       isActive: true,
@@ -348,15 +352,37 @@ export class UIController {
       return;
     }
 
+    const wasOptimized = this.currentScenario === 'optimized';
     this.currentScenario = scenario;
 
     // Update UI state
     DOMHelpers.updateToggleButtons(scenario);
 
-    // Update 3D scene
-    this.sceneManager.switchScenario(scenario);
+    // Update 3D scene / handle manual step advances
+    if (scenario === 'optimized') {
+      if (!wasOptimized) {
+        // First press from current → apply first improvement via switchScenario
+        this.sceneManager.switchScenario('optimized');
+        this.optimizationStepCount = 1;
+        const firstStage = this.sceneManager?.pipeline?.lastImprovement?.stage || null;
+        try { window.dispatchEvent(new CustomEvent('optimization:step', { detail: { step: this.optimizationStepCount, stage: firstStage } })); } catch {}
+      } else {
+        // Already optimized → advance step up to max
+        if (this.optimizationStepCount < this.optimizationMaxSteps) {
+          const stage = this.sceneManager.pipeline.applyOptimizedStep();
+          if (stage) this.sceneManager.pipeline.flashStageHalo(stage);
+          this.optimizationStepCount++;
+          try { window.dispatchEvent(new CustomEvent('optimization:step', { detail: { step: this.optimizationStepCount, stage } })); } catch {}
+        }
+      }
+    } else {
+      // Back to current: restore
+      this.sceneManager.switchScenario('current');
+      this.optimizationStepCount = 0;
+      try { window.dispatchEvent(new CustomEvent('optimization:step', { detail: { step: this.optimizationStepCount } })); } catch {}
+    }
 
-    // Sync slider values with current businessData
+    // Sync sliders with current businessData
     const stages = ['leadGen', 'qualification', 'onboarding', 'delivery', 'retention'];
     stages.forEach(stage => {
       const value = this.businessData[stage];
@@ -369,18 +395,32 @@ export class UIController {
     this.metricsService.updateBusinessMetrics();
     this.metricsService.updateBottleneckAlert();
 
-    // Update educational overlays if on overview
-    if (this.selectedProcess === 'overview') {
-      this.overlayManager.updateEducationalOverlays();
+    // Overlays behavior per scenario
+    if (scenario === 'optimized') {
+      // Hide top; show bottom on overview
+      this.overlayManager.hideEducationalOverlays();
+      if (this.selectedProcess === 'overview') {
+        this.overlayManager.updateEducationalOverlays();
+        const bottomOverlay = document.getElementById('educationalBottomOverlay');
+        if (bottomOverlay) bottomOverlay.classList.remove('hidden');
+      }
+    } else {
+      // Current state: show/update overlays on overview
+      if (this.selectedProcess === 'overview') {
+        this.overlayManager.updateEducationalOverlays();
+        this.overlayManager.showEducationalOverlays();
+      } else {
+        this.overlayManager.hideEducationalOverlays();
+      }
     }
 
     if (this.selectedProcess !== 'overview') {
       this.updateProcessContent(this.selectedProcess);
     }
 
-    // Notify listeners (React UI) of scenario change
+    // Notify listeners (React UI) of scenario change + step count
     try {
-      window.dispatchEvent(new CustomEvent('scenario:changed', { detail: { scenario } }));
+      window.dispatchEvent(new CustomEvent('scenario:changed', { detail: { scenario, stepCount: this.optimizationStepCount } }));
     } catch {}
   }
 
@@ -403,9 +443,9 @@ export class UIController {
     STAGE_CONFIG.STAGES.forEach(stage => {
       // Update display value (already handles conversion in DOMHelpers)
       DOMHelpers.updateSliderValue(stage, this.businessData[stage]);
-
-      // Update slider position to match display value
-      const slider = document.querySelector(`input[onchange*="${stage}"]`);
+      
+      // Update slider position to match display value (use data-stage selector)
+      const slider = document.querySelector(`input[data-stage="${stage}"]`);
       if (slider) {
         slider.value = this.businessData[stage] - 10; // Convert to display value
       }
@@ -1008,7 +1048,14 @@ export class UIController {
     // Disable UI (tabs/sliders), lock camera to overview, hide overlays
     this.setUIRunningState(true);
     this.sceneManager.selectProcess('overview');
-    this.overlayManager.hideEducationalOverlays();
+    // Keep bottom overlay visible in optimized during sequence
+    if (this.currentScenario === 'optimized') {
+      this.overlayManager.updateEducationalOverlays();
+      const bottomOverlay = document.getElementById('educationalBottomOverlay');
+      if (bottomOverlay) bottomOverlay.classList.remove('hidden');
+    } else {
+      this.overlayManager.hideEducationalOverlays();
+    }
 
     // Progress ticker
     const startTs = performance.now();

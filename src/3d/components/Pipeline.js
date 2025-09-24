@@ -25,6 +25,7 @@ export class Pipeline {
     this.optimizedImprovedStage = null;
     this.optimizedBaselineThirdDistinct = null;
     this.optimizedDeltaStep = null;
+    this.lastImprovement = null;
     
     // Dynamic normalization bounds (used in optimized scenario)
     this.normMin = PIPELINE_CONFIG.MIN_POSSIBLE_CAPACITY;
@@ -291,6 +292,7 @@ export class Pipeline {
       this.businessData[bottleneckStage] = firstTarget;
       // Store delta so subsequent steps grow similarly to the first improvement
       this.optimizedDeltaStep = Math.max(1, firstTarget - currentValue);
+      this.lastImprovement = { stage: bottleneckStage, from: currentValue, to: firstTarget };
     } else if (scenario === 'current') {
       // Restore baseline values exactly
       if (this.optimizedBaseline) {
@@ -302,6 +304,7 @@ export class Pipeline {
       this.optimizedImprovedStage = null;
       this.optimizedBaselineThirdDistinct = null;
       this.optimizedDeltaStep = null;
+      this.lastImprovement = null;
       this.normFrozen = false;
     }
     
@@ -324,6 +327,7 @@ export class Pipeline {
     );
     this.businessData[bottleneckStage] = target;
 
+    this.lastImprovement = { stage: bottleneckStage, from: currentValue, to: target };
     this.create();
     return bottleneckStage;
   }
