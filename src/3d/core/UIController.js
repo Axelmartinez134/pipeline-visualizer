@@ -45,7 +45,7 @@ export class UIController {
     // Tutorial content
     this.TUTORIAL_STEPS = {
       0: {
-        title: "🎯 Find Your Constraint",
+        title: "🎯 Find Your Bottleneck",
         content: "START HERE",
         cta: "Start Tutorial",
         showClickMe: true
@@ -59,14 +59,14 @@ export class UIController {
       },
       2: {
         title: "🚀 Press ‘See After Automation’",
-        content: "Press \"See After Automation\".<br>We’ll map your top 3 constraints in order.",
-        cta: "Next: Spot Your Constraint",
+        content: "Press \"See After Automation\".<br>We’ll map your top 3 Bottlenecks in order.",
+        cta: "Next: Spot Your Bottleneck",
         showClickMe: true,
         highlightScenarioButton: true
       },
       3: {
-        title: "🔎 Spotting Your Constraint",
-        content: "The <strong style='color: #DC2626'>red section</strong> is your constraint.<br>It limits your entire business flow!",
+        title: "🔎 Spotting Your Bottleneck",
+        content: "The <strong style='color: #DC2626'>red section</strong> is your Bottleneck.<br>It limits your entire business flow!",
         cta: "Next: Try the Controls",
         showClickMe: true,
         highlightBottomBox: true

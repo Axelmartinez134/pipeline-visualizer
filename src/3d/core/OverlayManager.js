@@ -102,7 +102,7 @@ export class OverlayManager {
           } else {
             // Current state: only red constraint line; no improvement line
             capacitySmall.textContent = '';
-            constraintIndicator.innerHTML = `👆 <strong id="constraintStageText"><u>${stageNames[bottleneckStage]}</u></strong> is your constraint limiting your current growth`;
+            constraintIndicator.innerHTML = `👆 <strong id="constraintStageText"><u>${stageNames[bottleneckStage]}</u></strong> is your Bottleneck limiting your current growth`;
             constraintIndicator.style.color = '';
             constraintIndicator.style.fontWeight = 'normal';
           }

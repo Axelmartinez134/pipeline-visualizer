@@ -138,8 +138,8 @@ function App() {
     <VisualizerProvider>
     <div className="container">
       <div className="header">
-        <h1>Find the Constraint That Caps Your Growth</h1>
-        <p>Stop guessing: find your constraint and get an AI‑backed Automation roadmap that unlocks predictable growth—delivered in 24 hours.</p>
+        <h1>Find the Bottleneck That Caps Your Growth</h1>
+        <p>Stop guessing: find your Bottleneck and get an AI‑backed Automation roadmap that unlocks predictable growth—delivered in 24 hours.</p>
       </div>
 
       <div className="tabs">
@@ -207,8 +207,8 @@ function App() {
       <ProcessAnalysis selectedProcess="overview" />
 
       <div className="lead-capture" ref={leadCaptureRef}>
-        <h3>Your Constraint‑First Growth Automation Strategy</h3>
-        <p>Your answers from the Pipeline and Form below will be used to craft a personalized, constraint-first automation strategy, delivered within 24 hours.</p>
+        <h3>Your Bottleneck‑First Growth Automation Strategy</h3>
+        <p>Your answers from the Pipeline and Form below will be used to craft a personalized, Bottleneck-first automation strategy, delivered within 24 hours.</p>
         
         <form id="leadForm" className="lead-form">
           <div className="form-row">
@@ -434,7 +434,7 @@ function StickyCTA({ isVisible }) {
   return (
     <div className={`sticky-cta-bar ${isVisible ? 'visible' : ''}`}>
       <div className="sticky-cta-content">
-        <h4>Ready to Remove Your Constraint?</h4>
+        <h4>Ready to Remove Your Bottleneck?</h4>
         <button id="stickyCTAButton" onClick={scrollToForm}>
           Get My Automation Strategy
         </button>

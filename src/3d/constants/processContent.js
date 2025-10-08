@@ -133,7 +133,7 @@ export const PROCESS_AUTOMATIONS = {
     title: "Onboarding Process Analysis",
     description: "BOTTLENECK DETECTED! Your onboarding can only handle 25 clients/month. This is limiting your entire business to $75K ARR.",
     status: "bottleneck", 
-    statusText: "🚨 CRITICAL CONSTRAINT - Start Here!",
+    statusText: "🚨 CRITICAL BOTTLENECK - Start Here!",
     capacity: 25,
     unit: "new clients/month",
     automations: [

@@ -14,8 +14,8 @@ export default function ProcessAnalysis({ selectedProcess = 'overview' }) {
         <section className="deliverable-card">
           <h3>What You’ll Receive in 24 Hours</h3>
           <ul className="deliverable-list">
-            <li>Primary constraint identified with clear rationale</li>
-            <li>Your Top 3 Constraints to Remove</li>
+            <li>Primary Bottleneck identified with clear rationale</li>
+            <li>Your Top 3 Bottlenecks to Remove</li>
             <li>AI‑informed automations mapped to your stack</li>
             <li>Next‑step playbook to execute</li>
           </ul>

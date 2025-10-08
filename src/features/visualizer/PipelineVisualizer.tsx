@@ -65,7 +65,7 @@ export default function PipelineVisualizer({ variant = 'main', onReady, onDispos
       {/* Roadmap overlay (shows in optimized mode) */}
       <div id="roadmapOverlay" className="educational-overlay top-overlay hidden">
         <div className="educational-content">
-          <div id="roadmapTitle" className="roadmap-title">Your Highest‑Priority Constraints</div>
+          <div id="roadmapTitle" className="roadmap-title">Your Highest‑Priority Bottlenecks</div>
           <div id="roadmapRows" className="roadmap-rows">
             <div id="roadmapRow1" className="roadmap-row">1.</div>
             <div id="roadmapRow2" className="roadmap-row">2.</div>
@@ -83,7 +83,7 @@ export default function PipelineVisualizer({ variant = 'main', onReady, onDispos
             <>
               <div id="constraintCapacitySmall" className="constraint-capacity-small"></div>
               <div id="constraintIndicator" className="constraint-indicator">
-                👆 <strong id="constraintStageText">Onboarding</strong> is your constraint limiting your current growth
+                👆 <strong id="constraintStageText">Onboarding</strong> is your Bottleneck limiting your current growth
               </div>
               <div id="constraintCTA" className="educational-cta">
                 <strong>Click the tabs above to explore automation solutions</strong>
@@ -94,7 +94,7 @@ export default function PipelineVisualizer({ variant = 'main', onReady, onDispos
               <strong>
                 Explore each process area above, then discover your actual bottleneck with our proven assessment. We'll show you the exact automation solution to break through it.
               </strong>{' '}
-              <a href="/" style={{ color: '#1E3A8A', textDecoration: 'underline', fontWeight: 'bold' }}>Find Your Constraint →</a>
+              <a href="/" style={{ color: '#1E3A8A', textDecoration: 'underline', fontWeight: 'bold' }}>Find Your Bottleneck →</a>
             </div>
           )}
         </div>
