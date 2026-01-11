@@ -36,6 +36,48 @@ function extractPublicIdentifier(profileUrl) {
   }
 }
 
+function pickFirstString(...values) {
+  for (const v of values) {
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s) return s;
+  }
+  return null;
+}
+
+function extractAimfoxLeadProfileUrl(payload) {
+  // Be defensive: aimfox response shapes can differ.
+  const candidate =
+    payload?.profile_url ||
+    payload?.profileUrl ||
+    payload?.lead?.profile_url ||
+    payload?.lead?.profileUrl ||
+    payload?.data?.profile_url ||
+    payload?.data?.profileUrl ||
+    payload?.target?.profile_url ||
+    payload?.target?.profileUrl ||
+    payload?.lead?.target?.profile_url ||
+    payload?.lead?.target?.profileUrl ||
+    null;
+  return pickFirstString(candidate);
+}
+
+function extractAimfoxPublicIdentifier(payload) {
+  const candidate =
+    payload?.public_identifier ||
+    payload?.publicIdentifier ||
+    payload?.lead?.public_identifier ||
+    payload?.lead?.publicIdentifier ||
+    payload?.data?.public_identifier ||
+    payload?.data?.publicIdentifier ||
+    payload?.target?.public_identifier ||
+    payload?.target?.publicIdentifier ||
+    payload?.lead?.target?.public_identifier ||
+    payload?.lead?.target?.publicIdentifier ||
+    null;
+  return pickFirstString(candidate);
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -126,12 +168,36 @@ module.exports = async function handler(req, res) {
     const { profileActor, postsActor } = getActorIds();
 
     // Prefer an explicit URL (actors often want a URL). If we don't have it, fall back.
-    const profileUrlRaw =
+    let profileUrlRaw =
       lead.profile_url ||
       providedProfileUrl ||
       (lead.public_identifier ? `https://linkedin.com/in/${String(lead.public_identifier)}` : null);
 
-    const profileUrl = normalizeLinkedInProfileUrl(profileUrlRaw);
+    let profileUrl = normalizeLinkedInProfileUrl(profileUrlRaw);
+
+    // If we still don't have a usable URL, resolve via Aimfox lead details using linkedin_id.
+    if (!profileUrl) {
+      try {
+        const { getLeadById } = require('../../lib/aimfox');
+        const details = await getLeadById(lead.linkedin_id);
+        const urlFromAimfox = extractAimfoxLeadProfileUrl(details);
+        const pidFromAimfox = extractAimfoxPublicIdentifier(details);
+        profileUrlRaw = urlFromAimfox || profileUrlRaw;
+        profileUrl = normalizeLinkedInProfileUrl(profileUrlRaw);
+
+        if (urlFromAimfox || pidFromAimfox) {
+          await supabaseAdmin
+            .from('linkedin_leads')
+            .update({
+              profile_url: urlFromAimfox || lead.profile_url || null,
+              public_identifier: pidFromAimfox || lead.public_identifier || null,
+            })
+            .eq('id', lead.id);
+        }
+      } catch (e) {
+        // ignore; we'll error below with missing profile URL
+      }
+    }
 
     if (!profileUrl) {
       return json(res, 400, { ok: false, error: 'Missing LinkedIn profile URL (required by Apify actor)' });

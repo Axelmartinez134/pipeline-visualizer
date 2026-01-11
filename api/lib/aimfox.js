@@ -76,5 +76,12 @@ async function listRecentLeads(query) {
   return aimfoxFetch('/analytics/recent-leads', { query });
 }
 
-module.exports = { listRecentLeads };
+async function getLeadById(leadId) {
+  if (leadId == null || String(leadId).trim() === '') throw new Error('Missing leadId');
+  // Aimfox lead details endpoint (needed to resolve public_identifier/profile_url).
+  // Docs may vary by account; callers should handle errors gracefully.
+  return aimfoxFetch(`/leads/${encodeURIComponent(String(leadId).trim())}`, { method: 'GET' });
+}
+
+module.exports = { listRecentLeads, getLeadById };
 

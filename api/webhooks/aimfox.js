@@ -36,11 +36,52 @@ function pickLeadFromEvent(eventType, event) {
   return event?.target || event?.sender || null;
 }
 
+function pickFirstString(...values) {
+  for (const v of values) {
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s) return s;
+  }
+  return null;
+}
+
+function extractAimfoxLeadProfileUrl(payload) {
+  const candidate =
+    payload?.profile_url ||
+    payload?.profileUrl ||
+    payload?.lead?.profile_url ||
+    payload?.lead?.profileUrl ||
+    payload?.data?.profile_url ||
+    payload?.data?.profileUrl ||
+    payload?.target?.profile_url ||
+    payload?.target?.profileUrl ||
+    payload?.lead?.target?.profile_url ||
+    payload?.lead?.target?.profileUrl ||
+    null;
+  return pickFirstString(candidate);
+}
+
+function extractAimfoxPublicIdentifier(payload) {
+  const candidate =
+    payload?.public_identifier ||
+    payload?.publicIdentifier ||
+    payload?.lead?.public_identifier ||
+    payload?.lead?.publicIdentifier ||
+    payload?.data?.public_identifier ||
+    payload?.data?.publicIdentifier ||
+    payload?.target?.public_identifier ||
+    payload?.target?.publicIdentifier ||
+    payload?.lead?.target?.public_identifier ||
+    payload?.lead?.target?.publicIdentifier ||
+    null;
+  return pickFirstString(candidate);
+}
+
 async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn, profileUrl }) {
   // Only run if lead is not enriched yet
   const { data: existing, error: existingErr } = await supabaseAdmin
     .from('linkedin_leads')
-    .select('apify_profile_json,profile_url,public_identifier,linkedin_urn')
+    .select('apify_profile_json,profile_url,public_identifier,linkedin_urn,linkedin_id')
     .eq('id', leadId)
     .maybeSingle();
   if (existingErr) return;
@@ -50,13 +91,37 @@ async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn,
     const { getActorIds, startActorRun, buildProfileInput, buildPostsInput } = require('../lib/apify');
     const { profileActor, postsActor } = getActorIds();
 
-    const resolvedProfileUrlRaw =
+    let resolvedProfileUrlRaw =
       profileUrl ||
       existing?.profile_url ||
       (existing?.public_identifier ? `https://www.linkedin.com/in/${String(existing.public_identifier)}` : null);
 
     const { normalizeLinkedInProfileUrl } = require('../lib/apify');
-    const resolvedProfileUrl = normalizeLinkedInProfileUrl(resolvedProfileUrlRaw);
+    let resolvedProfileUrl = normalizeLinkedInProfileUrl(resolvedProfileUrlRaw);
+
+    // If no URL present in webhook payload or lead row, resolve it from Aimfox.
+    if (!resolvedProfileUrl && existing?.linkedin_id) {
+      try {
+        const { getLeadById } = require('../lib/aimfox');
+        const details = await getLeadById(existing.linkedin_id);
+        const urlFromAimfox = extractAimfoxLeadProfileUrl(details);
+        const pidFromAimfox = extractAimfoxPublicIdentifier(details);
+        resolvedProfileUrlRaw = urlFromAimfox || resolvedProfileUrlRaw;
+        resolvedProfileUrl = normalizeLinkedInProfileUrl(resolvedProfileUrlRaw);
+
+        if (urlFromAimfox || pidFromAimfox) {
+          await supabaseAdmin
+            .from('linkedin_leads')
+            .update({
+              profile_url: urlFromAimfox || existing.profile_url || null,
+              public_identifier: pidFromAimfox || existing.public_identifier || null,
+            })
+            .eq('id', leadId);
+        }
+      } catch (e) {
+        // ignore; will be handled below
+      }
+    }
 
     if (!resolvedProfileUrl) {
       await supabaseAdmin
@@ -75,7 +140,7 @@ async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn,
       }),
     );
 
-    // Posts actor generally wants a URL; if we don't have it yet, we'll run posts later after profile data resolves.
+    // Posts actor wants `targetUrls: [...]` (see api/lib/apify.js).
     const postsRun = await startActorRun(postsActor, buildPostsInput({ profileUrl: resolvedProfileUrl }));
 
     await supabaseAdmin
