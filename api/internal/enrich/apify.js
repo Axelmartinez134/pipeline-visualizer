@@ -111,7 +111,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { getActorIds, startActorRun, buildProfileInput, buildPostsInput } = require('../../lib/apify');
+    const { getActorIds, startActorRunWithFallback, buildProfileInput, buildPostsInput } = require('../../lib/apify');
     const { profileActor, postsActor } = getActorIds();
 
     // Prefer an explicit URL (actors often want a URL). If we don't have it, fall back.
@@ -145,17 +145,21 @@ module.exports = async function handler(req, res) {
       postsActor,
     });
 
-    const profileInput = buildProfileInput({
+    const profileInputObj = buildProfileInput({
       linkedinUrn: lead.linkedin_urn ? String(lead.linkedin_urn) : null,
       profileUrl,
       publicIdentifier: lead.public_identifier ? String(lead.public_identifier) : null,
     });
-    console.log('[apify] profile actor input', { urls0: profileInput?.urls?.[0] || null });
+    const profileInputStringUrls = {
+      ...profileInputObj,
+      urls: Array.isArray(profileInputObj.urls) && profileInputObj.urls[0]?.url ? [profileInputObj.urls[0].url] : [],
+    };
+    console.log('[apify] profile actor input', {
+      urls0_obj: profileInputObj?.urls?.[0] || null,
+      urls0_str: profileInputStringUrls?.urls?.[0] || null,
+    });
 
-    const profileRun = await startActorRun(
-      profileActor,
-      profileInput,
-    );
+    const profileRun = await startActorRunWithFallback(profileActor, [profileInputObj, profileInputStringUrls]);
 
     const postsRun = profileUrl ? await startActorRun(postsActor, buildPostsInput({ profileUrl })) : null;
 

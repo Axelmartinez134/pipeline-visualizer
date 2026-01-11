@@ -105,12 +105,27 @@ function buildProfileInput({ linkedinUrn, profileUrl, publicIdentifier }) {
   if (profileUrl) {
     const normalized = normalizeLinkedInProfileUrl(profileUrl);
     if (!normalized) throw new Error(`Invalid LinkedIn profile URL for Apify: ${String(profileUrl)}`);
-    input.urls = [normalized];
+    // Some actors define `urls` as "requestListSources" (array of objects with { url }).
+    // We'll default to the strict object form; callers can supply a different variant if needed.
+    input.urls = [{ url: normalized }];
     input.profileUrl = normalized;
   }
   if (linkedinUrn) input.urn = linkedinUrn;
   if (publicIdentifier) input.public_identifier = publicIdentifier;
   return input;
+}
+
+async function startActorRunWithFallback(actorId, inputVariants) {
+  let lastErr = null;
+  for (const v of inputVariants) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      return await startActorRun(actorId, v);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
 }
 
 function buildPostsInput({ profileUrl }) {
@@ -129,6 +144,7 @@ function buildPostsInput({ profileUrl }) {
 module.exports = {
   getActorIds,
   startActorRun,
+  startActorRunWithFallback,
   getRun,
   getDatasetItems,
   buildProfileInput,
