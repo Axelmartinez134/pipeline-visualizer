@@ -61,14 +61,46 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  // Minimal log for smoke-testing (we'll persist to DB in Phase 2).
+  const eventType = payload.event_type || payload.eventType || null;
+  const eventId = payload.id || payload.event_id || null;
+
+  // Phase 2: persist raw events (audit trail + idempotency) using Supabase service role.
   try {
-    const eventType = payload.event_type || payload.eventType || null;
-    const eventId = payload.id || payload.event_id || null;
-    console.log('[aimfox-webhook]', { eventType, eventId });
-  } catch {
-    // ignore logging errors
+    const { getSupabaseAdminClient } = require('../lib/supabaseAdmin');
+    const supabaseAdmin = getSupabaseAdminClient();
+
+    const { error: insertError } = await supabaseAdmin
+      .from('linkedin_webhook_events')
+      .insert({
+        event_id: eventId || null,
+        event_type: eventType || 'unknown',
+        payload,
+        processed: false,
+      });
+
+    // If we got a duplicate event_id, ignore it (idempotency).
+    // Postgres unique violation details vary; we just treat any insert error with event_id present as non-fatal.
+    if (insertError) {
+      const msg = String(insertError.message || '');
+      const isDup = eventId && (msg.includes('duplicate') || msg.includes('unique') || msg.includes('23505'));
+      if (!isDup) {
+        console.error('[aimfox-webhook] failed to insert audit event', insertError);
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: false, error: 'Failed to persist webhook event' }));
+        return;
+      }
+    }
+  } catch (e) {
+    console.error('[aimfox-webhook] server configuration error', e);
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ ok: false, error: 'Server not configured for persistence' }));
+    return;
   }
+
+  // Still log a tiny summary for debugging.
+  console.log('[aimfox-webhook]', { eventType, eventId });
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
