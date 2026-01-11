@@ -77,11 +77,16 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'Method not allowed' });
   }
 
-  const expected = process.env.ADMIN_API_SECRET;
+  // Auth: single shared secret via Authorization: Bearer <SECRET>
+  const expected = process.env.API_BEARER_SECRET || process.env.ADMIN_API_SECRET;
   if (!expected) {
-    return json(res, 500, { ok: false, error: 'Server not configured (missing ADMIN_API_SECRET)' });
+    return json(res, 500, { ok: false, error: 'Server not configured (missing API_BEARER_SECRET)' });
   }
-  const provided = req.headers['x-admin-secret'];
+  const authHeader = req.headers['authorization'];
+  const provided =
+    typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')
+      ? authHeader.slice('bearer '.length).trim()
+      : null;
   if (!provided || provided !== expected) {
     return json(res, 401, { ok: false, error: 'Unauthorized' });
   }

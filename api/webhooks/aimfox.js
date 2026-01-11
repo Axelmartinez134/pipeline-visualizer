@@ -45,17 +45,23 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const expectedSecret = process.env.AIMFOX_WEBHOOK_SECRET;
-  const providedSecret = req.headers['x-aimfox-secret'];
+  // Auth: single shared secret via Authorization: Bearer <SECRET>
+  // Prefer API_BEARER_SECRET; keep backwards-compat via AIMFOX_WEBHOOK_SECRET.
+  const expectedSecret = process.env.API_BEARER_SECRET || process.env.AIMFOX_WEBHOOK_SECRET;
+  const authHeader = req.headers['authorization'];
+  const providedToken =
+    typeof authHeader === 'string' && authHeader.toLowerCase().startsWith('bearer ')
+      ? authHeader.slice('bearer '.length).trim()
+      : null;
 
   if (!expectedSecret) {
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ ok: false, error: 'Server not configured (missing AIMFOX_WEBHOOK_SECRET)' }));
+    res.end(JSON.stringify({ ok: false, error: 'Server not configured (missing API_BEARER_SECRET)' }));
     return;
   }
 
-  if (!providedSecret || providedSecret !== expectedSecret) {
+  if (!providedToken || providedToken !== expectedSecret) {
     res.statusCode = 401;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({ ok: false, error: 'Unauthorized' }));
