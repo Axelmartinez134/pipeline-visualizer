@@ -19,6 +19,8 @@ type LeadRow = {
   apify_last_scraped_at: string | null;
   apify_profile_json: any | null;
   apify_error: string | null;
+  apify_profile_run_id: string | null;
+  apify_posts_run_id: string | null;
 };
 
 function formatDate(value: string | null) {
@@ -70,7 +72,7 @@ export default function LinkedInCampaignPage() {
     const { data, error: err } = await supabase
       .from('linkedin_leads')
       .select(
-        'id,linkedin_id,picture_url,full_name,occupation,campaign_name,lead_status,connection_accepted_at,last_interaction_at,profile_url,apify_last_scraped_at,apify_profile_json,apify_error',
+        'id,linkedin_id,picture_url,full_name,occupation,campaign_name,lead_status,connection_accepted_at,last_interaction_at,profile_url,apify_last_scraped_at,apify_profile_json,apify_error,apify_profile_run_id,apify_posts_run_id',
       )
       .order('connection_accepted_at', { ascending: false, nullsFirst: false })
       .limit(500);
@@ -149,6 +151,15 @@ export default function LinkedInCampaignPage() {
       const accessToken = session?.access_token;
       if (!accessToken) throw new Error('Not signed in');
 
+      let profileUrl = lead.profile_url;
+      if (!profileUrl) {
+        const entered = window.prompt(
+          'This lead is missing a LinkedIn profile URL.\n\nPaste it here (e.g. https://www.linkedin.com/in/username/):',
+          '',
+        );
+        if (entered) profileUrl = entered.trim();
+      }
+
       const res = await fetch('/api/internal/enrich/apify', {
         method: 'POST',
         headers: {
@@ -158,7 +169,7 @@ export default function LinkedInCampaignPage() {
         body: JSON.stringify({
           action: 'start',
           linkedinId: lead.linkedin_id,
-          profileUrl: lead.profile_url || undefined,
+          profileUrl: profileUrl || undefined,
         }),
       });
       const json = await res.json().catch(() => null);
@@ -334,6 +345,7 @@ export default function LinkedInCampaignPage() {
                         const enriched = Boolean(r.apify_last_scraped_at) || apifyStatus === 'succeeded';
                         const running = apifyStatus === 'running' || apifyStatus === 'SUCCEEDED' || apifyStatus === 'RUNNING';
                         const hasError = Boolean(r.apify_error);
+                        const hasRuns = Boolean(r.apify_profile_run_id || r.apify_posts_run_id);
 
                         return (
                       <tr key={r.id}>
@@ -398,7 +410,7 @@ export default function LinkedInCampaignPage() {
                               </Button>
                             ) : null}
 
-                            {!enriched && running ? (
+                            {!enriched && (running || hasRuns) ? (
                               <Button
                                 size="sm"
                                 variant="outline"

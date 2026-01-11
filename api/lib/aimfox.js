@@ -79,8 +79,24 @@ async function listRecentLeads(query) {
 async function getLeadById(leadId) {
   if (leadId == null || String(leadId).trim() === '') throw new Error('Missing leadId');
   // Aimfox lead details endpoint (needed to resolve public_identifier/profile_url).
-  // Docs may vary by account; callers should handle errors gracefully.
-  return aimfoxFetch(`/leads/${encodeURIComponent(String(leadId).trim())}`, { method: 'GET' });
+  // Some Aimfox accounts expose different paths; try a small set of common variants.
+  const id = encodeURIComponent(String(leadId).trim());
+  const candidates = [`/leads/${id}`, `/leads/${id}/details`, `/leads/${id}/detail`, `/leads/${id}/profile`];
+  let lastErr = null;
+  for (const path of candidates) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      return await aimfoxFetch(path, { method: 'GET' });
+    } catch (e) {
+      lastErr = e;
+      // Keep trying on 404/400; stop on auth/5xx.
+      const status = e?.status || null;
+      if (status && status >= 500) break;
+      if (status === 401 || status === 403) break;
+      continue;
+    }
+  }
+  throw lastErr || new Error('Aimfox lead details request failed');
 }
 
 module.exports = { listRecentLeads, getLeadById };
