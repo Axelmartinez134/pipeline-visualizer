@@ -68,6 +68,7 @@ module.exports = async function handler(req, res) {
     return json(res, 400, { ok: false, error: 'Invalid JSON payload' });
   }
 
+  const action = payload?.action != null ? String(payload.action).toLowerCase() : 'start'; // start | poll
   const linkedinId = payload?.linkedinId != null ? String(payload.linkedinId).trim() : null;
   const providedProfileUrlRaw = payload?.profileUrl != null ? String(payload.profileUrl).trim() : null;
   const providedProfileUrl = normalizeLinkedInProfileUrl(providedProfileUrlRaw);
@@ -84,7 +85,9 @@ module.exports = async function handler(req, res) {
 
   let leadQuery = supabaseAdmin
     .from('linkedin_leads')
-    .select('id,linkedin_id,linkedin_urn,public_identifier,profile_url,apify_profile_json');
+    .select(
+      'id,linkedin_id,linkedin_urn,public_identifier,profile_url,apify_profile_json,apify_profile_run_id,apify_posts_run_id,apify_last_scraped_at,apify_error',
+    );
 
   if (linkedinId) {
     leadQuery = leadQuery.eq('linkedin_id', linkedinId);
@@ -106,7 +109,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  if (lead.apify_profile_json) {
+  if (action === 'start' && lead.apify_profile_json) {
     return json(res, 200, { ok: true, alreadyEnriched: true, leadId: lead.id });
   }
 
@@ -117,6 +120,8 @@ module.exports = async function handler(req, res) {
       startActorRunWithFallback,
       buildProfileInput,
       buildPostsInput,
+      getRun,
+      getDatasetItems,
     } = require('../../lib/apify');
     const { profileActor, postsActor } = getActorIds();
 
@@ -138,6 +143,75 @@ module.exports = async function handler(req, res) {
         .from('linkedin_leads')
         .update({ profile_url: providedProfileUrl })
         .eq('id', lead.id);
+    }
+
+    if (action === 'poll') {
+      const profileRunId = lead.apify_profile_run_id ? String(lead.apify_profile_run_id) : null;
+      const postsRunId = lead.apify_posts_run_id ? String(lead.apify_posts_run_id) : null;
+      if (!profileRunId && !postsRunId) {
+        return json(res, 400, { ok: false, error: 'No Apify run ids found on this lead. Click Run Apify first.' });
+      }
+
+      const datasetLimit = parseInt(process.env.APIFY_DATASET_LIMIT || '10', 10);
+      const limit = Number.isFinite(datasetLimit) ? datasetLimit : 10;
+
+      const out = {
+        ok: true,
+        leadId: lead.id,
+        profile: null,
+        posts: null,
+      };
+
+      const nextJson = {
+        status: 'running',
+        started_at: lead.apify_profile_json?.started_at || lead.apify_profile_json?.startedAt || null,
+        updated_at: new Date().toISOString(),
+        profile: null,
+        posts: null,
+      };
+
+      if (profileRunId) {
+        const run = await getRun(profileRunId);
+        const status = run?.status || null;
+        const datasetId = run?.defaultDatasetId || null;
+        let items = null;
+        if (status === 'SUCCEEDED' && datasetId) {
+          items = await getDatasetItems(datasetId, { limit });
+        }
+        nextJson.profile = { runId: profileRunId, status, datasetId, items };
+        out.profile = { runId: profileRunId, status, datasetId, itemsCount: Array.isArray(items) ? items.length : null };
+      }
+
+      if (postsRunId) {
+        const run = await getRun(postsRunId);
+        const status = run?.status || null;
+        const datasetId = run?.defaultDatasetId || null;
+        let items = null;
+        if (status === 'SUCCEEDED' && datasetId) {
+          items = await getDatasetItems(datasetId, { limit });
+        }
+        nextJson.posts = { runId: postsRunId, status, datasetId, items };
+        out.posts = { runId: postsRunId, status, datasetId, itemsCount: Array.isArray(items) ? items.length : null };
+      }
+
+      const statuses = [nextJson.profile?.status, nextJson.posts?.status].filter(Boolean);
+      const allSucceeded = statuses.length > 0 && statuses.every((s) => s === 'SUCCEEDED');
+      const anyFailed = statuses.some((s) => s === 'FAILED' || s === 'ABORTED' || s === 'TIMED-OUT');
+
+      let apifyError = null;
+      if (anyFailed) apifyError = 'One or more Apify runs failed. Check Apify run logs.';
+
+      const { error: upErr } = await supabaseAdmin
+        .from('linkedin_leads')
+        .update({
+          apify_profile_json: allSucceeded ? { ...nextJson, status: 'succeeded' } : nextJson,
+          apify_last_scraped_at: allSucceeded ? new Date().toISOString() : null,
+          apify_error: apifyError,
+        })
+        .eq('id', lead.id);
+      if (upErr) return json(res, 500, { ok: false, error: upErr.message });
+
+      return json(res, 200, { ...out, allSucceeded, anyFailed });
     }
 
     console.log('[apify] starting enrichment', {

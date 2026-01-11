@@ -26,6 +26,7 @@ export default function LinkedInSettingsPage() {
   const [enrichLinkedinId, setEnrichLinkedinId] = useState('');
   const [enrichProfileUrl, setEnrichProfileUrl] = useState('');
   const [enrichResult, setEnrichResult] = useState<string | null>(null);
+  const [polling, setPolling] = useState(false);
 
   const [offerIcp, setOfferIcp] = useState('');
   const [tone, setTone] = useState('');
@@ -168,6 +169,39 @@ export default function LinkedInSettingsPage() {
     }
   };
 
+  const pollApify = async () => {
+    setPolling(true);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+
+      const linkedinId = enrichLinkedinId.trim();
+      const profileUrl = enrichProfileUrl.trim();
+      if (!linkedinId && !profileUrl) throw new Error('Enter a lead linkedin_id or a LinkedIn profile URL');
+
+      const res = await fetch('/api/internal/enrich/apify', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'poll', linkedinId: linkedinId || undefined, profileUrl: profileUrl || undefined }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Poll failed (${res.status})`);
+
+      const p = json?.profile ? `profile=${json.profile.status}` : 'profile=—';
+      const s = json?.posts ? `posts=${json.posts.status}` : 'posts=—';
+      setEnrichResult(`Poll: ${p}, ${s}${json?.allSucceeded ? ' ✅ saved' : ''}`);
+    } catch (e: any) {
+      setError(e?.message || 'Poll failed');
+    } finally {
+      setPolling(false);
+    }
+  };
+
   return (
     <div className="min-h-full p-6 text-white">
       <div className="mb-6">
@@ -299,9 +333,19 @@ export default function LinkedInSettingsPage() {
                   />
                 </div>
               </div>
-              <Button onClick={runApifyForLead} disabled={enriching}>
-                {enriching ? 'Starting…' : 'Run Apify'}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button onClick={runApifyForLead} disabled={enriching}>
+                  {enriching ? 'Starting…' : 'Run Apify'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                  onClick={pollApify}
+                  disabled={polling}
+                >
+                  {polling ? 'Checking…' : 'Check status / Pull results'}
+                </Button>
+              </div>
             </div>
 
             {enrichResult ? <div className="text-sm text-emerald-300">{enrichResult}</div> : null}
