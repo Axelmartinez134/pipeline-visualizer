@@ -4,6 +4,8 @@ import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { supabase } from '../../lib/supabaseClient';
+import { Textarea } from '../../components/ui/textarea';
+import { useNavigate } from 'react-router-dom';
 
 type LeadRow = {
   id: string;
@@ -64,6 +66,12 @@ export default function LinkedInCampaignPage() {
   const [syncNote, setSyncNote] = useState<string | null>(null);
   const [enrichingId, setEnrichingId] = useState<string | null>(null);
   const [pollingId, setPollingId] = useState<string | null>(null);
+  const [draftLead, setDraftLead] = useState<LeadRow | null>(null);
+  const [draftText, setDraftText] = useState('');
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   const fetchLeads = async () => {
     let mounted = true;
@@ -232,6 +240,80 @@ export default function LinkedInCampaignPage() {
     }
   };
 
+  const openDraft = (lead: LeadRow) => {
+    setError(null);
+    setDraftLead(lead);
+
+    // Basic starter template (manual-first). Keep short and editable.
+    const name = (lead.full_name || '').split(' ')[0] || '';
+    const starter = name
+      ? `Hey ${name} — quick question.\n\n`
+      : 'Hey — quick question.\n\n';
+    setDraftText(starter);
+  };
+
+  const closeDraft = () => {
+    setDraftLead(null);
+    setDraftText('');
+  };
+
+  const createManualDraft = async ({ goToQueue }: { goToQueue: boolean }) => {
+    if (!draftLead) return;
+    setSavingDraft(true);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('Not signed in');
+
+      const message = draftText.trim();
+      if (!message) throw new Error('Draft message is empty');
+
+      const { error: insErr } = await supabase.from('linkedin_ai_drafts').insert({
+        user_id: userId,
+        lead_id: draftLead.id,
+        draft_type: 'first_message',
+        status: 'pending',
+        draft_message: message,
+      });
+      if (insErr) throw new Error(insErr.message);
+
+      closeDraft();
+      if (goToQueue) navigate('/linkedin/queue');
+    } catch (e: any) {
+      setError(e?.message || 'Failed to create draft');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const generateAiDraft = async (lead: LeadRow) => {
+    setGeneratingId(lead.id);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+
+      const res = await fetch('/api/internal/drafts/generate', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ leadId: lead.id }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Generate failed (${res.status})`);
+
+      navigate('/linkedin/queue');
+    } catch (e: any) {
+      setError(e?.message || 'Generate failed');
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
   return (
     <div className="min-h-full p-8 text-white">
       <div className="w-full space-y-10">
@@ -339,6 +421,8 @@ export default function LinkedInCampaignPage() {
                     <th className="text-left font-medium px-4 pb-2">Campaign</th>
                     <th className="text-left font-medium px-4 pb-2">Status</th>
                     <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Enriched?</th>
+                    <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Draft</th>
+                    <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">AI</th>
                     <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Accepted</th>
                     <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Last activity</th>
                   </tr>
@@ -346,13 +430,13 @@ export default function LinkedInCampaignPage() {
                 <tbody className="align-top">
                   {loading ? (
                     <tr>
-                      <td className="px-4 py-8 text-white/60" colSpan={6}>
+                      <td className="px-4 py-8 text-white/60" colSpan={8}>
                         Loading leads…
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td className="px-4 py-8 text-white/60" colSpan={6}>
+                      <td className="px-4 py-8 text-white/60" colSpan={8}>
                         No leads found.
                       </td>
                     </tr>
@@ -443,6 +527,28 @@ export default function LinkedInCampaignPage() {
                             ) : null}
                           </div>
                         </td>
+                        <td className="px-4 py-4 bg-black/30 border border-white/10 whitespace-nowrap">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-8 bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                            onClick={() => openDraft(r)}
+                          >
+                            Draft
+                          </Button>
+                        </td>
+                        <td className="px-4 py-4 bg-black/30 border border-white/10 whitespace-nowrap">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 bg-transparent text-white border-white/15 hover:bg-white/10 hover:text-white"
+                            onClick={() => void generateAiDraft(r)}
+                            disabled={generatingId === r.id}
+                            title={!r.apify_last_scraped_at ? 'Enrich + Pull first' : 'Generate AI draft'}
+                          >
+                            {generatingId === r.id ? 'Generating…' : 'Generate'}
+                          </Button>
+                        </td>
                         <td className="px-4 py-4 bg-black/30 border border-white/10 text-white/70 whitespace-nowrap" title={formatDate(r.connection_accepted_at)}>
                           {formatRelative(r.connection_accepted_at)}
                         </td>
@@ -460,6 +566,61 @@ export default function LinkedInCampaignPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Manual draft side panel */}
+      {draftLead ? (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60"
+            onClick={closeDraft}
+            aria-label="Close draft panel"
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-[560px] border-l border-white/10 bg-black/90 backdrop-blur">
+            <div className="p-6 border-b border-white/10 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-lg font-semibold truncate">
+                  Draft first message · {draftLead.full_name || 'Unknown'}
+                </div>
+                <div className="text-sm text-white/60 truncate">{draftLead.occupation || '—'}</div>
+              </div>
+              <Button
+                variant="secondary"
+                className="bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                onClick={closeDraft}
+              >
+                Close
+              </Button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto h-[calc(100%-72px)]">
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">Message</div>
+                <Textarea
+                  value={draftText}
+                  onChange={(e) => setDraftText(e.target.value)}
+                  className="min-h-[260px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
+                />
+                <div className="text-xs text-white/50">{draftText.length} chars</div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button onClick={() => void createManualDraft({ goToQueue: false })} disabled={savingDraft}>
+                  {savingDraft ? 'Saving…' : 'Save draft'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                  onClick={() => void createManualDraft({ goToQueue: true })}
+                  disabled={savingDraft}
+                >
+                  {savingDraft ? 'Saving…' : 'Save & go to Queue'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -50,9 +50,20 @@ export default function LinkedInQueuePage() {
     setSaving(true);
     setError(null);
     try {
+      // Fetch current edit_count so we can increment instead of overwriting.
+      const { data: current, error: curErr } = await supabase
+        .from('linkedin_ai_drafts')
+        .select('edit_count,draft_message')
+        .eq('id', id)
+        .single();
+      if (curErr) throw new Error(curErr.message);
+
+      const changed = String(current?.draft_message || '') !== editText;
+      const nextEditCount = changed ? (Number(current?.edit_count || 0) + 1) : Number(current?.edit_count || 0);
+
       const { error: err } = await supabase
         .from('linkedin_ai_drafts')
-        .update({ status: next, draft_message: editText, edit_count: (active?.draft_message !== editText ? 1 : 0) })
+        .update({ status: next, draft_message: editText, edit_count: nextEditCount })
         .eq('id', id);
       if (err) throw new Error(err.message);
       await fetchDrafts();
