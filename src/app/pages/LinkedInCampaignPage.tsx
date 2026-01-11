@@ -15,6 +15,10 @@ type LeadRow = {
   lead_status: string;
   connection_accepted_at: string | null;
   last_interaction_at: string | null;
+  profile_url: string | null;
+  apify_last_scraped_at: string | null;
+  apify_profile_json: any | null;
+  apify_error: string | null;
 };
 
 function formatDate(value: string | null) {
@@ -56,6 +60,8 @@ export default function LinkedInCampaignPage() {
   const [status, setStatus] = useState<'all' | 'accepted' | 'replied'>('all');
   const [syncing, setSyncing] = useState(false);
   const [syncNote, setSyncNote] = useState<string | null>(null);
+  const [enrichingId, setEnrichingId] = useState<string | null>(null);
+  const [pollingId, setPollingId] = useState<string | null>(null);
 
   const fetchLeads = async () => {
     let mounted = true;
@@ -63,7 +69,9 @@ export default function LinkedInCampaignPage() {
     setError(null);
     const { data, error: err } = await supabase
       .from('linkedin_leads')
-      .select('id,linkedin_id,picture_url,full_name,occupation,campaign_name,lead_status,connection_accepted_at,last_interaction_at')
+      .select(
+        'id,linkedin_id,picture_url,full_name,occupation,campaign_name,lead_status,connection_accepted_at,last_interaction_at,profile_url,apify_last_scraped_at,apify_profile_json,apify_error',
+      )
       .order('connection_accepted_at', { ascending: false, nullsFirst: false })
       .limit(500);
 
@@ -130,6 +138,66 @@ export default function LinkedInCampaignPage() {
       setError(e?.message || 'Sync failed');
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const startEnrich = async (lead: LeadRow) => {
+    setEnrichingId(lead.id);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+
+      const res = await fetch('/api/internal/enrich/apify', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'start',
+          linkedinId: lead.linkedin_id,
+          profileUrl: lead.profile_url || undefined,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Enrich failed (${res.status})`);
+      await fetchLeads();
+    } catch (e: any) {
+      setError(e?.message || 'Enrich failed');
+    } finally {
+      setEnrichingId(null);
+    }
+  };
+
+  const pollEnrich = async (lead: LeadRow) => {
+    setPollingId(lead.id);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+
+      const res = await fetch('/api/internal/enrich/apify', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'poll',
+          linkedinId: lead.linkedin_id,
+          profileUrl: lead.profile_url || undefined,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Poll failed (${res.status})`);
+      await fetchLeads();
+    } catch (e: any) {
+      setError(e?.message || 'Poll failed');
+    } finally {
+      setPollingId(null);
     }
   };
 
@@ -239,6 +307,7 @@ export default function LinkedInCampaignPage() {
                     <th className="text-left font-medium px-4 pb-2">Lead</th>
                     <th className="text-left font-medium px-4 pb-2">Campaign</th>
                     <th className="text-left font-medium px-4 pb-2">Status</th>
+                    <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Enriched?</th>
                     <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Accepted</th>
                     <th className="text-left font-medium px-4 pb-2 whitespace-nowrap">Last activity</th>
                   </tr>
@@ -246,18 +315,27 @@ export default function LinkedInCampaignPage() {
                 <tbody className="align-top">
                   {loading ? (
                     <tr>
-                      <td className="px-4 py-8 text-white/60" colSpan={5}>
+                      <td className="px-4 py-8 text-white/60" colSpan={6}>
                         Loading leads…
                       </td>
                     </tr>
                   ) : filtered.length === 0 ? (
                     <tr>
-                      <td className="px-4 py-8 text-white/60" colSpan={5}>
+                      <td className="px-4 py-8 text-white/60" colSpan={6}>
                         No leads found.
                       </td>
                     </tr>
                   ) : (
                     filtered.map((r) => (
+                      (() => {
+                        const apifyStatus = (r.apify_profile_json && typeof r.apify_profile_json === 'object'
+                          ? (r.apify_profile_json as any).status
+                          : null) as string | null;
+                        const enriched = Boolean(r.apify_last_scraped_at) || apifyStatus === 'succeeded';
+                        const running = apifyStatus === 'running' || apifyStatus === 'SUCCEEDED' || apifyStatus === 'RUNNING';
+                        const hasError = Boolean(r.apify_error);
+
+                        return (
                       <tr key={r.id}>
                         <td className="px-4 py-4 bg-black/30 border border-white/10 first:rounded-l-2xl last:rounded-r-2xl">
                           <div className="flex items-center gap-3 min-w-0">
@@ -290,6 +368,49 @@ export default function LinkedInCampaignPage() {
                             {r.lead_status}
                           </Badge>
                         </td>
+                        <td className="px-4 py-4 bg-black/30 border border-white/10 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={[
+                                'rounded-full px-2 py-1 text-xs font-semibold border',
+                                enriched
+                                  ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/20'
+                                  : hasError
+                                  ? 'bg-red-500/15 text-red-200 border-red-500/20'
+                                  : running
+                                  ? 'bg-amber-500/15 text-amber-200 border-amber-500/20'
+                                  : 'bg-white/10 text-white/70 border-white/10',
+                              ].join(' ')}
+                              title={hasError ? r.apify_error || '' : ''}
+                            >
+                              {enriched ? 'Yes' : hasError ? 'Error' : running ? 'Running' : 'No'}
+                            </Badge>
+
+                            {!enriched ? (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-8 bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                                onClick={() => void startEnrich(r)}
+                                disabled={enrichingId === r.id}
+                              >
+                                {enrichingId === r.id ? 'Enriching…' : 'Enrich'}
+                              </Button>
+                            ) : null}
+
+                            {!enriched && running ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 bg-transparent text-white border-white/15 hover:bg-white/10 hover:text-white"
+                                onClick={() => void pollEnrich(r)}
+                                disabled={pollingId === r.id}
+                              >
+                                {pollingId === r.id ? 'Checking…' : 'Pull'}
+                              </Button>
+                            ) : null}
+                          </div>
+                        </td>
                         <td className="px-4 py-4 bg-black/30 border border-white/10 text-white/70 whitespace-nowrap" title={formatDate(r.connection_accepted_at)}>
                           {formatRelative(r.connection_accepted_at)}
                         </td>
@@ -297,6 +418,8 @@ export default function LinkedInCampaignPage() {
                           {formatRelative(r.last_interaction_at)}
                         </td>
                       </tr>
+                        );
+                      })()
                     ))
                   )}
                 </tbody>
