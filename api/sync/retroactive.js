@@ -40,31 +40,31 @@ function asIsoTimestamp(value) {
   return null;
 }
 
-function normalizeAcceptedEventToLead(ev) {
-  const event = ev?.event || ev?.data || null;
-  const target = event?.target || null;
-  const campaign = event?.campaign || null;
-  if (!target?.id) return null;
+function normalizeAcceptedItemToLead(item) {
+  // Aimfox recent-leads response shape (observed):
+  // {
+  //   timestamp, campaign_id, campaign_name, target_id, target_urn, transition: "accepted",
+  //   target: { urn, full_name, picture_url, occupation, ... }
+  // }
+  const target = item?.target || null;
+  const linkedinId = item?.target_id != null ? String(item.target_id) : null;
+  if (!linkedinId) return null;
 
-  const linkedinId = String(target.id);
-  const publicId = target.public_identifier ? String(target.public_identifier) : null;
-  const profileUrl = publicId ? `https://linkedin.com/in/${publicId}` : null;
-  const acceptedAt = asIsoTimestamp(event?.timestamp || ev?.timestamp) || null;
+  const acceptedAt = asIsoTimestamp(item?.timestamp) || null;
 
   return {
     linkedin_id: linkedinId,
-    linkedin_urn: target.urn ? String(target.urn) : null,
-    public_identifier: publicId,
-    first_name: target.first_name != null ? String(target.first_name).trim() : null,
-    last_name: target.last_name != null ? String(target.last_name).trim() : null,
-    full_name:
-      target.first_name || target.last_name
-        ? `${String(target.first_name || '').trim()} ${String(target.last_name || '').trim()}`.trim()
-        : null,
-    picture_url: target.picture_url ? String(target.picture_url) : null,
-    profile_url: profileUrl,
-    campaign_id: campaign?.id ? String(campaign.id) : null,
-    campaign_name: campaign?.name ? String(campaign.name) : null,
+    linkedin_urn: item?.target_urn ? String(item.target_urn) : (target?.urn ? String(target.urn) : null),
+    public_identifier: target?.public_identifier ? String(target.public_identifier) : null,
+    full_name: target?.full_name != null ? String(target.full_name).trim() : null,
+    first_name: target?.first_name != null ? String(target.first_name).trim() : null,
+    last_name: target?.last_name != null ? String(target.last_name).trim() : null,
+    headline: target?.headline != null ? String(target.headline) : null,
+    occupation: target?.occupation != null ? String(target.occupation) : null,
+    picture_url: target?.picture_url != null ? String(target.picture_url) : null,
+    profile_url: target?.public_identifier ? `https://linkedin.com/in/${String(target.public_identifier)}` : null,
+    campaign_id: item?.campaign_id ? String(item.campaign_id) : null,
+    campaign_name: item?.campaign_name ? String(item.campaign_name) : null,
     lead_status: 'accepted',
     connection_accepted_at: acceptedAt,
     last_interaction_at: acceptedAt,
@@ -129,29 +129,33 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  // The API response shape may vary. Accept either an array, or { data: [...] }.
-  const items = Array.isArray(recent) ? recent : Array.isArray(recent?.data) ? recent.data : [];
+  // Aimfox response shape (observed): { status: "ok", leads: [...] }
+  // Also support older shapes: array, or { data: [...] }.
+  const items = Array.isArray(recent)
+    ? recent
+    : Array.isArray(recent?.leads)
+    ? recent.leads
+    : Array.isArray(recent?.data)
+    ? recent.data
+    : [];
 
+  // accepted records are identified by transition === "accepted"
   const accepted = items.filter((it) => {
-    const t = it?.event_type || it?.eventType;
-    return t === 'accepted';
+    const transition = it?.transition ? String(it.transition).toLowerCase() : '';
+    return transition === 'accepted';
   });
 
   const filtered = accepted.filter((it) => {
-    const ev = it?.event || it?.data || {};
-    const c = ev?.campaign || {};
-    const cid = c?.id ? String(c.id) : '';
-    const cname = c?.name ? String(c.name).toLowerCase() : '';
-    const ctype = c?.type ? String(c.type).toLowerCase() : '';
+    const cid = it?.campaign_id ? String(it.campaign_id) : '';
+    const cname = it?.campaign_name ? String(it.campaign_name).toLowerCase() : '';
+    // recent-leads items don't include campaign type in the observed payload
     if (campaignIdFilter && cid !== campaignIdFilter) return false;
     if (campaignNameFilter && !cname.includes(campaignNameFilter)) return false;
-    if (campaignTypeFilter && ctype !== campaignTypeFilter) return false;
+    if (campaignTypeFilter) return false;
     return true;
   });
 
-  const leads = filtered
-    .map(normalizeAcceptedEventToLead)
-    .filter(Boolean);
+  const leads = filtered.map(normalizeAcceptedItemToLead).filter(Boolean);
 
   if (leads.length === 0) {
     return json(res, 200, { ok: true, foundAccepted: accepted.length, upserted: 0 });
