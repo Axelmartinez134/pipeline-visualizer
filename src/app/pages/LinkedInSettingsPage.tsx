@@ -5,6 +5,25 @@ import { Textarea } from '../../components/ui/textarea';
 import { Input } from '../../components/ui/input';
 import { supabase } from '../../lib/supabaseClient';
 
+const DEFAULT_AI_SYSTEM_PROMPT = [
+  'You write concise, high-performing first messages for LinkedIn outreach.',
+  'Return ONLY the message text. No quotes, no bullet points, no analysis.',
+  'Keep it natural and human. Avoid sounding like AI.',
+].join('\n');
+
+const DEFAULT_AI_USER_PROMPT_TEMPLATE = [
+  'Write a first message to {{LEAD_NAME}}.',
+  '{{#if LEAD_OCCUPATION}}They are: {{LEAD_OCCUPATION}}{{/if}}',
+  '',
+  'Use the following context (JSON) and follow it strictly:',
+  '{{CONTEXT_JSON}}',
+  '',
+  'Constraints:',
+  '- 2 short paragraphs max',
+  '- 1 question max',
+  '- No links unless CTA prefs explicitly request it',
+].join('\n');
+
 type WebhookEventRow = {
   event_id: string | null;
   event_type: string;
@@ -32,8 +51,8 @@ export default function LinkedInSettingsPage() {
   const [tone, setTone] = useState('');
   const [constraints, setConstraints] = useState('');
   const [cta, setCta] = useState('');
-  const [aiSystemPrompt, setAiSystemPrompt] = useState('');
-  const [aiUserPromptTemplate, setAiUserPromptTemplate] = useState('');
+  const [aiSystemPrompt, setAiSystemPrompt] = useState(DEFAULT_AI_SYSTEM_PROMPT);
+  const [aiUserPromptTemplate, setAiUserPromptTemplate] = useState(DEFAULT_AI_USER_PROMPT_TEMPLATE);
 
   useEffect(() => {
     let mounted = true;
@@ -63,8 +82,8 @@ export default function LinkedInSettingsPage() {
           setTone(profile.data.tone_guidelines || '');
           setConstraints(profile.data.hard_constraints || '');
           setCta(profile.data.calendly_cta_prefs || '');
-          setAiSystemPrompt(profile.data.ai_system_prompt || '');
-          setAiUserPromptTemplate(profile.data.ai_user_prompt_template || '');
+          setAiSystemPrompt(profile.data.ai_system_prompt || DEFAULT_AI_SYSTEM_PROMPT);
+          setAiUserPromptTemplate(profile.data.ai_user_prompt_template || DEFAULT_AI_USER_PROMPT_TEMPLATE);
         }
       }
 
@@ -298,7 +317,7 @@ export default function LinkedInSettingsPage() {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-sm font-medium">AI system prompt (optional)</div>
+                <div className="text-sm font-medium">AI system prompt</div>
                 <Textarea
                   value={aiSystemPrompt}
                   onChange={(e) => setAiSystemPrompt(e.target.value)}
@@ -308,7 +327,7 @@ export default function LinkedInSettingsPage() {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-sm font-medium">AI user prompt template (optional)</div>
+                <div className="text-sm font-medium">AI user prompt template</div>
                 <div className="text-xs text-white/50">
                   Placeholders: <span className="font-mono">{'{'}{'{'}LEAD_NAME{'}'}{'}'}</span>,{' '}
                   <span className="font-mono">{'{'}{'{'}LEAD_OCCUPATION{'}'}{'}'}</span>,{' '}
