@@ -32,6 +32,8 @@ export default function LinkedInSettingsPage() {
   const [tone, setTone] = useState('');
   const [constraints, setConstraints] = useState('');
   const [cta, setCta] = useState('');
+  const [aiSystemPrompt, setAiSystemPrompt] = useState('');
+  const [aiUserPromptTemplate, setAiUserPromptTemplate] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -53,7 +55,7 @@ export default function LinkedInSettingsPage() {
       if (userId) {
         const profile = await supabase
           .from('user_profiles')
-          .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs')
+          .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template')
           .eq('user_id', userId)
           .maybeSingle();
         if (profile.data) {
@@ -61,6 +63,8 @@ export default function LinkedInSettingsPage() {
           setTone(profile.data.tone_guidelines || '');
           setConstraints(profile.data.hard_constraints || '');
           setCta(profile.data.calendly_cta_prefs || '');
+          setAiSystemPrompt(profile.data.ai_system_prompt || '');
+          setAiUserPromptTemplate(profile.data.ai_user_prompt_template || '');
         }
       }
 
@@ -121,6 +125,8 @@ export default function LinkedInSettingsPage() {
         tone_guidelines: tone,
         hard_constraints: constraints,
         calendly_cta_prefs: cta,
+        ai_system_prompt: aiSystemPrompt,
+        ai_user_prompt_template: aiUserPromptTemplate,
       });
       if (upErr) throw new Error(upErr.message);
       setProfileSaved('Saved.');
@@ -289,6 +295,31 @@ export default function LinkedInSettingsPage() {
               <div className="grid gap-2">
                 <div className="text-sm font-medium">Calendly / CTA preferences</div>
                 <Textarea value={cta} onChange={(e) => setCta(e.target.value)} className="bg-black/40 border-white/15 text-white placeholder:text-white/40" />
+              </div>
+
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">AI system prompt (optional)</div>
+                <Textarea
+                  value={aiSystemPrompt}
+                  onChange={(e) => setAiSystemPrompt(e.target.value)}
+                  placeholder="High-level behavior instructions for Claude."
+                  className="min-h-[120px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">AI user prompt template (optional)</div>
+                <div className="text-xs text-white/50">
+                  Placeholders: <span className="font-mono">{'{'}{'{'}LEAD_NAME{'}'}{'}'}</span>,{' '}
+                  <span className="font-mono">{'{'}{'{'}LEAD_OCCUPATION{'}'}{'}'}</span>,{' '}
+                  <span className="font-mono">{'{'}{'{'}CONTEXT_JSON{'}'}{'}'}</span>
+                </div>
+                <Textarea
+                  value={aiUserPromptTemplate}
+                  onChange={(e) => setAiUserPromptTemplate(e.target.value)}
+                  placeholder="Example: Write a first LinkedIn message to {{LEAD_NAME}}...\n\nContext:\n{{CONTEXT_JSON}}"
+                  className="min-h-[200px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
+                />
               </div>
 
               <div className="flex items-center gap-3">

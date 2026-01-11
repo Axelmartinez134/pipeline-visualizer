@@ -101,28 +101,41 @@ function buildPrompt({ lead, apify, aboutMe }) {
     },
   };
 
-  const system = [
+  const defaultSystem = [
     'You write concise, high-performing first messages for LinkedIn outreach.',
     'Return ONLY the message text. No quotes, no bullet points, no analysis.',
     'Keep it natural and human. Avoid sounding like AI.',
   ].join('\n');
 
-  const user = [
-    `Write a first message to ${leadName}.`,
-    occupation ? `They are: ${occupation}` : '',
+  const defaultUserTemplate = [
+    'Write a first message to {{LEAD_NAME}}.',
+    '{{#if LEAD_OCCUPATION}}They are: {{LEAD_OCCUPATION}}{{/if}}',
     '',
     'Use the following context (JSON) and follow it strictly:',
-    JSON.stringify(context, null, 2),
+    '{{CONTEXT_JSON}}',
     '',
     'Constraints:',
     '- 2 short paragraphs max',
     '- 1 question max',
     '- No links unless CTA prefs explicitly request it',
-  ]
-    .filter(Boolean)
-    .join('\n');
+  ].join('\n');
 
-  return { system, user, context };
+  const systemTemplate =
+    (aboutMe?.ai_system_prompt != null ? String(aboutMe.ai_system_prompt) : '').trim() || defaultSystem;
+  const userTemplate =
+    (aboutMe?.ai_user_prompt_template != null ? String(aboutMe.ai_user_prompt_template) : '').trim() ||
+    defaultUserTemplate;
+
+  const contextJson = JSON.stringify(context, null, 2);
+  const user = userTemplate
+    .replaceAll('{{LEAD_NAME}}', String(leadName))
+    .replaceAll('{{LEAD_OCCUPATION}}', String(occupation))
+    .replaceAll('{{CONTEXT_JSON}}', contextJson)
+    // simple conditional cleanup if user leaves our default handlebars-ish marker in place
+    .replace(/\{\{#if\s+LEAD_OCCUPATION\}\}[\s\S]*?\{\{\/if\}\}/g, occupation ? `They are: ${occupation}` : '')
+    .trim();
+
+  return { system: systemTemplate, user, context };
 }
 
 module.exports = async function handler(req, res) {
@@ -174,7 +187,7 @@ module.exports = async function handler(req, res) {
 
   const { data: aboutMe, error: profErr } = await supabaseAdmin
     .from('user_profiles')
-    .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs')
+    .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template')
     .eq('user_id', userData.user.id)
     .maybeSingle();
   if (profErr) return json(res, 500, { ok: false, error: profErr.message });
