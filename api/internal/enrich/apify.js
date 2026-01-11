@@ -111,7 +111,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { getActorIds, startActorRunWithFallback, buildProfileInput, buildPostsInput } = require('../../lib/apify');
+    const {
+      getActorIds,
+      startActorRun,
+      startActorRunWithFallback,
+      buildProfileInput,
+      buildPostsInput,
+    } = require('../../lib/apify');
     const { profileActor, postsActor } = getActorIds();
 
     // Prefer an explicit URL (actors often want a URL). If we don't have it, fall back.
