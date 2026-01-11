@@ -3,6 +3,8 @@ import RequireAuth from '../auth/RequireAuth';
 import ProductShell from '../layouts/ProductShell';
 import LoginPage from '../pages/LoginPage';
 import BlankProductPage from '../pages/BlankProductPage';
+import LinkedInCampaignPage from '../pages/LinkedInCampaignPage';
+import LinkedInSettingsPage from '../pages/LinkedInSettingsPage';
 import NotFound from '../../pages/NotFound.jsx';
 import AuditRoute from './AuditRoute';
 import OfferingsRoute from './OfferingsRoute';
@@ -31,10 +33,10 @@ export default function AppRoutes() {
           {/* LinkedIn Product Routes - All point to BlankProductPage */}
           <Route path="/linkedin/upload" element={<BlankProductPage productName="Upload & Enrich" />} />
           <Route path="/linkedin/generate" element={<BlankProductPage productName="Generate Messages" />} />
-          <Route path="/linkedin/campaign" element={<BlankProductPage productName="Campaign Status" />} />
+          <Route path="/linkedin/campaign" element={<LinkedInCampaignPage />} />
           <Route path="/linkedin/queue" element={<BlankProductPage productName="Approval Queue" />} />
           <Route path="/linkedin/booked" element={<BlankProductPage productName="Booked Calls" />} />
-          <Route path="/linkedin/settings" element={<BlankProductPage productName="Settings" />} />
+          <Route path="/linkedin/settings" element={<LinkedInSettingsPage />} />
 
           {/* Carousel Product Route */}
           <Route path="/carousel" element={<BlankProductPage productName="Carousel Generator" />} />

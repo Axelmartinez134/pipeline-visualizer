@@ -110,10 +110,10 @@ export default function ProductShell() {
 
         {/* Internal LinkedIn Sidebar (only shown when LinkedIn is active) */}
         {showInternalSidebar && (
-          <aside className="w-72 bg-white border-r border-slate-200 flex flex-col relative z-10">
-            <div className="px-5 py-6 border-b border-slate-200">
+          <aside className="w-72 bg-black border-r border-white/10 flex flex-col relative z-10">
+            <div className="px-5 py-6 border-b border-white/10">
               <div className="flex items-center justify-center">
-                <div className="text-lg font-semibold text-slate-900 tracking-tight text-center">
+                <div className="text-lg font-semibold text-white tracking-tight text-center">
                   LinkedIn Outreach
                 </div>
               </div>
@@ -131,8 +131,8 @@ export default function ProductShell() {
                     className={cn(
                       'relative grid grid-cols-[1fr_auto] items-center gap-3 h-11 px-3 rounded-xl transition-all duration-150',
                       isActive
-                        ? 'bg-blue-50 text-slate-900 shadow-sm ring-1 ring-inset ring-blue-100'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                        ? 'bg-white/10 text-white ring-1 ring-inset ring-white/10'
+                        : 'text-white/60 hover:bg-white/5 hover:text-white',
                     )}
                     end
                   >
@@ -140,10 +140,10 @@ export default function ProductShell() {
                       <div
                         className={cn(
                           'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-                          isActive ? 'bg-white shadow-sm' : 'bg-white/0',
+                          isActive ? 'bg-white/10' : 'bg-white/0',
                         )}
                       >
-                        <Icon className={cn('w-5 h-5', isActive ? 'text-blue-700' : 'text-slate-500')} />
+                        <Icon className={cn('w-5 h-5', isActive ? 'text-white' : 'text-white/60')} />
                       </div>
                       <span className="text-sm font-medium truncate">
                         {item.label}
@@ -153,7 +153,7 @@ export default function ProductShell() {
                       <Badge
                         className={cn(
                           'shrink-0 min-w-9 h-6 px-2.5 rounded-full',
-                          'bg-blue-600 text-white border border-blue-600/20',
+                          'bg-blue-500/20 text-blue-100 border border-blue-500/20',
                         )}
                       >
                         {badgeText}
