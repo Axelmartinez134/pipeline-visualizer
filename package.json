@@ -36,6 +36,7 @@
     "vitest": "^2.1.9"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/postcss": "^4.1.11",
     "@vitejs/plugin-react": "^4.7.0",
     "class-variance-authority": "^0.7.1",

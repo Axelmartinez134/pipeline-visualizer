@@ -6,10 +6,13 @@ import BlankProductPage from '../pages/BlankProductPage';
 import NotFound from '../../pages/NotFound.jsx';
 import AuditRoute from './AuditRoute';
 import OfferingsRoute from './OfferingsRoute';
-import { isAuthed } from '../auth/auth';
+import { useAuth } from '../auth/AuthContext';
+import FullScreenLoader from '../../components/ui/FullScreenLoader';
 
 function IndexRedirect() {
-  return <Navigate to={isAuthed() ? '/linkedin/upload' : '/login'} replace />;
+  const { authed, loading } = useAuth();
+  if (loading) return <FullScreenLoader label="Checking session…" />;
+  return <Navigate to={authed ? '/linkedin/upload' : '/login'} replace />;
 }
 
 export default function AppRoutes() {
