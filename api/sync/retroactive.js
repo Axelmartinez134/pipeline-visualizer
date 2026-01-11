@@ -120,7 +120,13 @@ module.exports = async function handler(req, res) {
   try {
     recent = await listRecentLeads();
   } catch (e) {
-    return json(res, 502, { ok: false, error: `Aimfox recent-leads failed: ${String(e?.message || e)}` });
+    const status = e?.status || null;
+    const details = e?.details || e?.response || null;
+    return json(res, 502, {
+      ok: false,
+      error: `Aimfox recent-leads failed${status ? ` (HTTP ${status})` : ''}: ${String(e?.message || e)}`,
+      details,
+    });
   }
 
   // The API response shape may vary. Accept either an array, or { data: [...] }.

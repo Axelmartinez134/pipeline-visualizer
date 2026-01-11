@@ -34,13 +34,22 @@ async function aimfoxFetch(path, { method = 'GET', body, query } = {}) {
   }
 
   if (!res.ok) {
+    const details = json ?? (text ? { raw: text.slice(0, 2000) } : null);
+    const messageFromJson =
+      json && typeof json === 'object'
+        ? (typeof json.error === 'string'
+            ? json.error
+            : typeof json.message === 'string'
+            ? json.message
+            : null)
+        : null;
     const message =
-      (json && (json.error || json.message)) ||
+      messageFromJson ||
       (text ? text.slice(0, 500) : '') ||
       `Aimfox request failed (${res.status})`;
     const err = new Error(message);
     err.status = res.status;
-    err.response = json || text;
+    err.details = details;
     throw err;
   }
 
