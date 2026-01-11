@@ -179,7 +179,7 @@ module.exports = async function handler(req, res) {
     .maybeSingle();
   if (profErr) return json(res, 500, { ok: false, error: profErr.message });
 
-  const model = process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest';
+  const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
   const { system, user, context } = buildPrompt({ lead, apify: lead.apify_profile_json, aboutMe });
 
   let text;
