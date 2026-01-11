@@ -22,16 +22,23 @@ function readRawBody(req) {
 function normalizeLinkedInProfileUrl(url) {
   if (!url) return null;
   try {
-    const u = new URL(String(url));
+    let raw = String(url).trim();
+    // If user pastes "linkedin.com/in/..." without scheme, add https://
+    if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+
+    const u = new URL(raw);
     // Strip query/hash and normalize hostname for comparison
     u.hash = '';
     u.search = '';
-    u.hostname = u.hostname.replace(/^www\./, '').toLowerCase();
+    const host = u.hostname.toLowerCase().replace(/^www\./, '');
+    // Only allow linkedin.com URLs (actors validate strictly)
+    if (!host.endsWith('linkedin.com')) return null;
+    u.hostname = 'www.linkedin.com';
     // remove trailing slash
     u.pathname = u.pathname.replace(/\/+$/, '');
     return u.toString();
   } catch {
-    return String(url).trim() || null;
+    return null;
   }
 }
 
@@ -84,7 +91,11 @@ module.exports = async function handler(req, res) {
   const providedProfileUrl = normalizeLinkedInProfileUrl(providedProfileUrlRaw);
 
   if (!linkedinId && !providedProfileUrl) {
-    return json(res, 400, { ok: false, error: 'Provide either linkedinId or profileUrl' });
+    return json(res, 400, {
+      ok: false,
+      error: 'Provide either linkedinId or a valid LinkedIn profile URL',
+      debug: { receivedProfileUrl: providedProfileUrlRaw || null },
+    });
   }
 
   const publicIdentifier = extractPublicIdentifier(providedProfileUrl);
