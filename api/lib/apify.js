@@ -73,6 +73,13 @@ function buildProfileInput({ linkedinUrn, profileUrl, publicIdentifier }) {
   // This actor requires `input.urls` (array of LinkedIn profile URLs).
   // Keep `profileUrl` too for compatibility with other actors.
   if (profileUrl) {
+    // Validate URL shape early so we fail with a clear message.
+    try {
+      // eslint-disable-next-line no-new
+      new URL(profileUrl);
+    } catch {
+      throw new Error(`Invalid profileUrl for Apify: ${String(profileUrl)}`);
+    }
     input.urls = [profileUrl];
     input.profileUrl = profileUrl;
   }

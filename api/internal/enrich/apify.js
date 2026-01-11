@@ -133,10 +133,12 @@ module.exports = async function handler(req, res) {
     const { profileActor, postsActor } = getActorIds();
 
     // Prefer an explicit URL (actors often want a URL). If we don't have it, fall back.
-    const profileUrl =
+    const profileUrlRaw =
       lead.profile_url ||
       providedProfileUrl ||
       (lead.public_identifier ? `https://linkedin.com/in/${String(lead.public_identifier)}` : null);
+
+    const profileUrl = normalizeLinkedInProfileUrl(profileUrlRaw);
 
     if (!profileUrl) {
       return json(res, 400, { ok: false, error: 'Missing LinkedIn profile URL (required by Apify actor)' });
@@ -155,18 +157,22 @@ module.exports = async function handler(req, res) {
       linkedin_id: lead.linkedin_id,
       linkedin_urn: lead.linkedin_urn,
       profileUrl,
+      profileUrlRaw,
       resolvedFrom: linkedinId ? 'linkedin_id' : providedProfileUrl ? 'profile_url' : 'lead_row',
       profileActor,
       postsActor,
     });
 
+    const profileInput = buildProfileInput({
+      linkedinUrn: lead.linkedin_urn ? String(lead.linkedin_urn) : null,
+      profileUrl,
+      publicIdentifier: lead.public_identifier ? String(lead.public_identifier) : null,
+    });
+    console.log('[apify] profile actor input', { urls0: profileInput?.urls?.[0] || null });
+
     const profileRun = await startActorRun(
       profileActor,
-      buildProfileInput({
-        linkedinUrn: lead.linkedin_urn ? String(lead.linkedin_urn) : null,
-        profileUrl,
-        publicIdentifier: lead.public_identifier ? String(lead.public_identifier) : null,
-      }),
+      profileInput,
     );
 
     const postsRun = profileUrl ? await startActorRun(postsActor, buildPostsInput({ profileUrl })) : null;

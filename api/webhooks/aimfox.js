@@ -50,10 +50,14 @@ async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn,
     const { getActorIds, startActorRun, buildProfileInput, buildPostsInput } = require('../lib/apify');
     const { profileActor, postsActor } = getActorIds();
 
-    const resolvedProfileUrl =
+    const resolvedProfileUrlRaw =
       profileUrl ||
       existing?.profile_url ||
       (existing?.public_identifier ? `https://www.linkedin.com/in/${String(existing.public_identifier)}` : null);
+
+    const resolvedProfileUrl = resolvedProfileUrlRaw
+      ? String(resolvedProfileUrlRaw).trim().replace(/^https?:\/\/linkedin\.com/i, 'https://www.linkedin.com')
+      : null;
 
     if (!resolvedProfileUrl) {
       await supabaseAdmin
