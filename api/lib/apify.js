@@ -70,7 +70,12 @@ async function getDatasetItems(datasetId, { limit = 50 } = {}) {
 function buildProfileInput({ linkedinUrn, profileUrl, publicIdentifier }) {
   // Actor docs vary; we try to be permissive. We'll store failures if incompatible.
   const input = {};
-  if (profileUrl) input.profileUrl = profileUrl;
+  // This actor requires `input.urls` (array of LinkedIn profile URLs).
+  // Keep `profileUrl` too for compatibility with other actors.
+  if (profileUrl) {
+    input.urls = [profileUrl];
+    input.profileUrl = profileUrl;
+  }
   if (linkedinUrn) input.urn = linkedinUrn;
   if (publicIdentifier) input.public_identifier = publicIdentifier;
   return input;

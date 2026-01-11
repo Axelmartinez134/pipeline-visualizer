@@ -40,7 +40,7 @@ async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn,
   // Only run if lead is not enriched yet
   const { data: existing, error: existingErr } = await supabaseAdmin
     .from('linkedin_leads')
-    .select('apify_profile_json')
+    .select('apify_profile_json,profile_url,public_identifier,linkedin_urn')
     .eq('id', leadId)
     .maybeSingle();
   if (existingErr) return;
@@ -50,10 +50,30 @@ async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn,
     const { getActorIds, startActorRun, buildProfileInput, buildPostsInput } = require('../lib/apify');
     const { profileActor, postsActor } = getActorIds();
 
-    const profileRun = await startActorRun(profileActor, buildProfileInput({ linkedinUrn, profileUrl }));
+    const resolvedProfileUrl =
+      profileUrl ||
+      existing?.profile_url ||
+      (existing?.public_identifier ? `https://www.linkedin.com/in/${String(existing.public_identifier)}` : null);
+
+    if (!resolvedProfileUrl) {
+      await supabaseAdmin
+        .from('linkedin_leads')
+        .update({ apify_error: 'Missing LinkedIn profile URL for Apify enrichment' })
+        .eq('id', leadId);
+      return;
+    }
+
+    const profileRun = await startActorRun(
+      profileActor,
+      buildProfileInput({
+        linkedinUrn: linkedinUrn || existing?.linkedin_urn || null,
+        profileUrl: resolvedProfileUrl,
+        publicIdentifier: existing?.public_identifier || null,
+      }),
+    );
 
     // Posts actor generally wants a URL; if we don't have it yet, we'll run posts later after profile data resolves.
-    const postsRun = profileUrl ? await startActorRun(postsActor, buildPostsInput({ profileUrl })) : null;
+    const postsRun = await startActorRun(postsActor, buildPostsInput({ profileUrl: resolvedProfileUrl }));
 
     await supabaseAdmin
       .from('linkedin_leads')

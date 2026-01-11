@@ -127,6 +127,10 @@ module.exports = async function handler(req, res) {
       providedProfileUrl ||
       (lead.public_identifier ? `https://linkedin.com/in/${String(lead.public_identifier)}` : null);
 
+    if (!profileUrl) {
+      return json(res, 400, { ok: false, error: 'Missing LinkedIn profile URL (required by Apify actor)' });
+    }
+
     // If user supplied a URL and lead doesn't have one yet, store it.
     if (!lead.profile_url && providedProfileUrl) {
       await supabaseAdmin
