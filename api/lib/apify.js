@@ -1,5 +1,35 @@
 const APIFY_BASE_URL = 'https://api.apify.com/v2';
 
+function normalizeLinkedInProfileUrl(url) {
+  if (!url) return null;
+  let raw = String(url).trim();
+  if (!raw) return null;
+  if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
+
+  let u;
+  try {
+    u = new URL(raw);
+  } catch {
+    return null;
+  }
+
+  u.hash = '';
+  u.search = '';
+
+  const host = u.hostname.toLowerCase().replace(/^www\./, '');
+  if (!host.endsWith('linkedin.com')) return null;
+  u.hostname = 'www.linkedin.com';
+  u.protocol = 'https:';
+
+  // Normalize /in/<handle> URLs (what the actor expects)
+  const m = u.pathname.match(/^\/in\/([^/]+)\/?$/i);
+  if (m?.[1]) {
+    u.pathname = `/in/${m[1]}/`;
+  }
+
+  return u.toString();
+}
+
 function getApifyToken() {
   const t = process.env.APIFY_API_TOKEN;
   if (!t) throw new Error('Missing APIFY_API_TOKEN env var');
@@ -73,15 +103,10 @@ function buildProfileInput({ linkedinUrn, profileUrl, publicIdentifier }) {
   // This actor requires `input.urls` (array of LinkedIn profile URLs).
   // Keep `profileUrl` too for compatibility with other actors.
   if (profileUrl) {
-    // Validate URL shape early so we fail with a clear message.
-    try {
-      // eslint-disable-next-line no-new
-      new URL(profileUrl);
-    } catch {
-      throw new Error(`Invalid profileUrl for Apify: ${String(profileUrl)}`);
-    }
-    input.urls = [profileUrl];
-    input.profileUrl = profileUrl;
+    const normalized = normalizeLinkedInProfileUrl(profileUrl);
+    if (!normalized) throw new Error(`Invalid LinkedIn profile URL for Apify: ${String(profileUrl)}`);
+    input.urls = [normalized];
+    input.profileUrl = normalized;
   }
   if (linkedinUrn) input.urn = linkedinUrn;
   if (publicIdentifier) input.public_identifier = publicIdentifier;
@@ -108,5 +133,6 @@ module.exports = {
   getDatasetItems,
   buildProfileInput,
   buildPostsInput,
+  normalizeLinkedInProfileUrl,
 };
 

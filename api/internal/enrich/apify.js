@@ -20,26 +20,8 @@ function readRawBody(req) {
 }
 
 function normalizeLinkedInProfileUrl(url) {
-  if (!url) return null;
-  try {
-    let raw = String(url).trim();
-    // If user pastes "linkedin.com/in/..." without scheme, add https://
-    if (!/^https?:\/\//i.test(raw)) raw = `https://${raw}`;
-
-    const u = new URL(raw);
-    // Strip query/hash and normalize hostname for comparison
-    u.hash = '';
-    u.search = '';
-    const host = u.hostname.toLowerCase().replace(/^www\./, '');
-    // Only allow linkedin.com URLs (actors validate strictly)
-    if (!host.endsWith('linkedin.com')) return null;
-    u.hostname = 'www.linkedin.com';
-    // remove trailing slash
-    u.pathname = u.pathname.replace(/\/+$/, '');
-    return u.toString();
-  } catch {
-    return null;
-  }
+  const { normalizeLinkedInProfileUrl: normalize } = require('../../lib/apify');
+  return normalize(url);
 }
 
 function extractPublicIdentifier(profileUrl) {
