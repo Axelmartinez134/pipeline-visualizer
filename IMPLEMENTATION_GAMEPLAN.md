@@ -125,15 +125,48 @@ Inside `/linkedin/*`:
 ---
 
 ## Phase 6 — Drafts + approval workflow (manual drafts first)
-**Goal:** Build the approval queue muscle before AI.
+**Goal:** Build the approval queue + the context foundation for high-quality drafts.
 
-- Add `linkedin_ai_drafts` table (or simpler drafts table)
-- UI to create/edit/approve drafts
-- Status lifecycle: pending → approved → sent (plus rejected/edited)
+### 6A) Database changes (foundation)
+- Extend `linkedin_leads`:
+  - `apify_profile_json` (JSONB)
+  - `apify_last_scraped_at` (timestamptz)
+  - optional tracking fields: run ids + error fields
+- Add `user_profiles` (About Me) keyed to `auth.users.id` (1 row per user)
+  - offer + ICP
+  - tone / voice guidelines
+  - hard constraints
+  - calendly / CTA preferences
+- Add `linkedin_ai_drafts` (approval queue)
+  - status: `pending | approved | rejected | sent`
+  - link to `lead_id` (+ `conversation_id` when available)
+  - store draft content + metadata + timestamps
+
+### 6B) Automatic lead enrichment (Apify)
+When a lead is inserted via `accepted` webhook:
+- If `apify_profile_json` is null, run Apify enrichment:
+  - Actor 1: `supreme_coder/linkedin-profile-scraper` (deep profile)
+  - Actor 2: `harvestapi/linkedin-profile-posts` (posts + comments/reactions)
+- Store raw results back onto the lead row (`apify_profile_json`) and set `apify_last_scraped_at`.
+
+### 6C) UI (Settings + Queue)
+- Settings page:
+  - Add an "About Me" editor saved in `user_profiles`
+- Approval Queue page:
+  - List `pending` drafts
+  - Edit + approve/reject (sending happens in Phase 7)
+
+### 6D) AI generation (Anthropic) — last step in Phase 6
+- Server-side Anthropic endpoint to generate a first message draft using:
+  - lead Apify JSON
+  - your About Me profile
+- Writes a `pending` row to `linkedin_ai_drafts`
 
 **Exit criteria:**
-- Drafts can be created/edited/approved
-- Approved draft can be sent (Phase 7)
+- Leads can be enriched (Apify JSON stored)
+- About Me can be saved/loaded (per-user row)
+- Approval Queue lists drafts and supports edit + approve/reject
+- Reminder: Phase 7 is required to actually send messages.
 
 **Checkpoint:** Ask user for approval to continue to Phase 7.
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
+import { Textarea } from '../../components/ui/textarea';
+import { Input } from '../../components/ui/input';
 import { supabase } from '../../lib/supabaseClient';
 
 type WebhookEventRow = {
@@ -18,6 +20,17 @@ export default function LinkedInSettingsPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichLinkedinId, setEnrichLinkedinId] = useState('');
+  const [enrichProfileUrl, setEnrichProfileUrl] = useState('');
+  const [enrichResult, setEnrichResult] = useState<string | null>(null);
+
+  const [offerIcp, setOfferIcp] = useState('');
+  const [tone, setTone] = useState('');
+  const [constraints, setConstraints] = useState('');
+  const [cta, setCta] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -33,6 +46,22 @@ export default function LinkedInSettingsPage() {
           .limit(1),
         supabase.from('linkedin_leads').select('*', { count: 'exact', head: true }),
       ]);
+
+      const session = (await supabase.auth.getSession()).data.session;
+      const userId = session?.user?.id || null;
+      if (userId) {
+        const profile = await supabase
+          .from('user_profiles')
+          .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (profile.data) {
+          setOfferIcp(profile.data.offer_icp || '');
+          setTone(profile.data.tone_guidelines || '');
+          setConstraints(profile.data.hard_constraints || '');
+          setCta(profile.data.calendly_cta_prefs || '');
+        }
+      }
 
       if (!mounted) return;
       if (events.error) setError(events.error.message);
@@ -73,6 +102,69 @@ export default function LinkedInSettingsPage() {
       setError(e?.message || 'Sync failed');
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const saveAboutMe = async () => {
+    setSavingProfile(true);
+    setProfileSaved(null);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('Not signed in');
+
+      const { error: upErr } = await supabase.from('user_profiles').upsert({
+        user_id: userId,
+        offer_icp: offerIcp,
+        tone_guidelines: tone,
+        hard_constraints: constraints,
+        calendly_cta_prefs: cta,
+      });
+      if (upErr) throw new Error(upErr.message);
+      setProfileSaved('Saved.');
+    } catch (e: any) {
+      setError(e?.message || 'Failed to save');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const runApifyForLead = async () => {
+    setEnriching(true);
+    setEnrichResult(null);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+
+      const linkedinId = enrichLinkedinId.trim();
+      const profileUrl = enrichProfileUrl.trim();
+      if (!linkedinId && !profileUrl) throw new Error('Enter a lead linkedin_id or a LinkedIn profile URL');
+
+      const res = await fetch('/api/internal/enrich/apify', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ linkedinId: linkedinId || undefined, profileUrl: profileUrl || undefined }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Enrich failed (${res.status})`);
+
+      if (json?.alreadyEnriched) {
+        setEnrichResult('Already enriched (apify_profile_json exists).');
+      } else {
+        setEnrichResult(
+          `Started. profileRunId=${json?.profileRunId ?? '—'} postsRunId=${json?.postsRunId ?? '—'}`,
+        );
+      }
+    } catch (e: any) {
+      setError(e?.message || 'Enrich failed');
+    } finally {
+      setEnriching(false);
     }
   };
 
@@ -133,6 +225,86 @@ export default function LinkedInSettingsPage() {
               {syncResult ? <div className="text-sm text-emerald-300">{syncResult}</div> : null}
               {error ? <div className="text-sm text-red-300">{error}</div> : null}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card className="bg-white/5 border-white/10 text-white">
+          <CardContent className="p-6 space-y-4">
+            <div>
+              <div className="text-lg font-semibold">About me (for AI drafts)</div>
+              <div className="text-sm text-white/60">
+                This is used to personalize first messages. Stored per user (future-proofed).
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">Offer + ICP</div>
+                <Textarea value={offerIcp} onChange={(e) => setOfferIcp(e.target.value)} className="bg-black/40 border-white/15 text-white placeholder:text-white/40" />
+              </div>
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">Tone / voice guidelines</div>
+                <Textarea value={tone} onChange={(e) => setTone(e.target.value)} className="bg-black/40 border-white/15 text-white placeholder:text-white/40" />
+              </div>
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">Hard constraints</div>
+                <Textarea value={constraints} onChange={(e) => setConstraints(e.target.value)} className="bg-black/40 border-white/15 text-white placeholder:text-white/40" />
+              </div>
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">Calendly / CTA preferences</div>
+                <Textarea value={cta} onChange={(e) => setCta(e.target.value)} className="bg-black/40 border-white/15 text-white placeholder:text-white/40" />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button onClick={saveAboutMe} disabled={savingProfile}>
+                  {savingProfile ? 'Saving…' : 'Save'}
+                </Button>
+                {profileSaved ? <div className="text-sm text-emerald-300">{profileSaved}</div> : null}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card className="bg-white/5 border-white/10 text-white">
+          <CardContent className="p-6 space-y-4">
+            <div>
+              <div className="text-lg font-semibold">Apify enrichment (test)</div>
+              <div className="text-sm text-white/60">
+                Starts Apify runs for an existing lead by linkedin_id and stores run ids on the lead.
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+              <div className="grid gap-3">
+                <div className="grid gap-2">
+                  <div className="text-sm font-medium">Lead linkedin_id (optional)</div>
+                  <Input
+                    value={enrichLinkedinId}
+                    onChange={(e) => setEnrichLinkedinId(e.target.value)}
+                    placeholder="e.g. 579183987"
+                    className="bg-black/40 border-white/15 text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/20"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <div className="text-sm font-medium">LinkedIn profile URL (recommended)</div>
+                  <Input
+                    value={enrichProfileUrl}
+                    onChange={(e) => setEnrichProfileUrl(e.target.value)}
+                    placeholder="https://www.linkedin.com/in/..."
+                    className="bg-black/40 border-white/15 text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/20"
+                  />
+                </div>
+              </div>
+              <Button onClick={runApifyForLead} disabled={enriching}>
+                {enriching ? 'Starting…' : 'Run Apify'}
+              </Button>
+            </div>
+
+            {enrichResult ? <div className="text-sm text-emerald-300">{enrichResult}</div> : null}
           </CardContent>
         </Card>
       </div>

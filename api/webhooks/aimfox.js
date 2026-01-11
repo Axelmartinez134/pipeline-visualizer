@@ -36,6 +36,45 @@ function pickLeadFromEvent(eventType, event) {
   return event?.target || event?.sender || null;
 }
 
+async function maybeKickoffApifyEnrichment({ supabaseAdmin, leadId, linkedinUrn, profileUrl }) {
+  // Only run if lead is not enriched yet
+  const { data: existing, error: existingErr } = await supabaseAdmin
+    .from('linkedin_leads')
+    .select('apify_profile_json')
+    .eq('id', leadId)
+    .maybeSingle();
+  if (existingErr) return;
+  if (existing?.apify_profile_json) return;
+
+  try {
+    const { getActorIds, startActorRun, buildProfileInput, buildPostsInput } = require('../lib/apify');
+    const { profileActor, postsActor } = getActorIds();
+
+    const profileRun = await startActorRun(profileActor, buildProfileInput({ linkedinUrn, profileUrl }));
+
+    // Posts actor generally wants a URL; if we don't have it yet, we'll run posts later after profile data resolves.
+    const postsRun = profileUrl ? await startActorRun(postsActor, buildPostsInput({ profileUrl })) : null;
+
+    await supabaseAdmin
+      .from('linkedin_leads')
+      .update({
+        apify_profile_json: { status: 'running', started_at: new Date().toISOString() },
+        apify_profile_run_id: profileRun?.id || null,
+        apify_posts_run_id: postsRun?.id || null,
+        apify_error: null,
+      })
+      .eq('id', leadId);
+  } catch (e) {
+    await supabaseAdmin
+      .from('linkedin_leads')
+      .update({
+        apify_profile_json: null,
+        apify_error: String(e?.message || e),
+      })
+      .eq('id', leadId);
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.statusCode = 405;
@@ -197,6 +236,16 @@ module.exports = async function handler(req, res) {
         .single();
       if (leadErr) throw leadErr;
       leadRow = leadData;
+    }
+
+    // Phase 6: trigger Apify enrichment for accepted leads (only if not already enriched)
+    if (eventType === 'accepted' && leadRow?.id) {
+      void maybeKickoffApifyEnrichment({
+        supabaseAdmin,
+        leadId: leadRow.id,
+        linkedinUrn: leadUrn,
+        profileUrl: leadProfileUrl,
+      });
     }
 
     // Upsert conversation + insert message for campaign_reply
