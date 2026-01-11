@@ -21,6 +21,8 @@ export default function LinkedInQueuePage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [rerunning, setRerunning] = useState(false);
 
   const fetchDrafts = async () => {
     setLoading(true);
@@ -45,6 +47,46 @@ export default function LinkedInQueuePage() {
   useEffect(() => {
     if (active) setEditText(active.draft_message);
   }, [active]);
+
+  useEffect(() => {
+    setFeedback('');
+  }, [activeId]);
+
+  const rerunAi = async () => {
+    if (!active?.lead?.id) {
+      setError('Missing lead for this draft');
+      return;
+    }
+    setRerunning(true);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+
+      const res = await fetch('/api/internal/drafts/generate', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          leadId: active.lead.id,
+          parentDraftId: active.id,
+          feedback: feedback.trim() || undefined,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Rerun failed (${res.status})`);
+
+      await fetchDrafts();
+      if (json?.draftId) setActiveId(String(json.draftId));
+    } catch (e: any) {
+      setError(e?.message || 'Rerun failed');
+    } finally {
+      setRerunning(false);
+    }
+  };
 
   const updateStatus = async (id: string, next: 'approved' | 'rejected') => {
     setSaving(true);
@@ -139,6 +181,27 @@ export default function LinkedInQueuePage() {
                     onChange={(e) => setEditText(e.target.value)}
                     className="min-h-[220px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
                   />
+                </div>
+
+                <div className="grid gap-2">
+                  <div className="text-sm font-medium">AI feedback (optional)</div>
+                  <Textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    className="min-h-[120px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
+                    placeholder="Example: make it shorter, remove jargon, mention their recent post, end with a soft question…"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      className="bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                      onClick={rerunAi}
+                      disabled={rerunning}
+                    >
+                      {rerunning ? 'Rerunning…' : 'Rerun AI'}
+                    </Button>
+                    <div className="text-xs text-white/50">Creates a new pending draft.</div>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">

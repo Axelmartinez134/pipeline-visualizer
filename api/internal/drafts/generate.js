@@ -61,7 +61,7 @@ async function anthropicGenerate({ system, user, model }) {
   return out;
 }
 
-function buildPrompt({ lead, apify, aboutMe }) {
+function buildPrompt({ lead, apify, aboutMe, feedback, previousDraftText }) {
   const leadName = lead?.full_name || 'the lead';
   const occupation = lead?.occupation || '';
 
@@ -99,6 +99,10 @@ function buildPrompt({ lead, apify, aboutMe }) {
       profile_summary: profileSummary,
       recent_posts: recentPosts,
     },
+    rerun: {
+      feedback: feedback || null,
+      previous_draft: previousDraftText || null,
+    },
   };
 
   const defaultSystem = [
@@ -127,13 +131,26 @@ function buildPrompt({ lead, apify, aboutMe }) {
     defaultUserTemplate;
 
   const contextJson = JSON.stringify(context, null, 2);
-  const user = userTemplate
+  const hasFeedbackPlaceholder = userTemplate.includes('{{FEEDBACK}}') || userTemplate.includes('{{PREVIOUS_DRAFT}}');
+  let user = userTemplate
     .replaceAll('{{LEAD_NAME}}', String(leadName))
     .replaceAll('{{LEAD_OCCUPATION}}', String(occupation))
     .replaceAll('{{CONTEXT_JSON}}', contextJson)
+    .replaceAll('{{FEEDBACK}}', String(feedback || ''))
+    .replaceAll('{{PREVIOUS_DRAFT}}', String(previousDraftText || ''))
     // simple conditional cleanup if user leaves our default handlebars-ish marker in place
     .replace(/\{\{#if\s+LEAD_OCCUPATION\}\}[\s\S]*?\{\{\/if\}\}/g, occupation ? `They are: ${occupation}` : '')
     .trim();
+
+  // If template doesn't explicitly place feedback, still inject it for reruns.
+  if (!hasFeedbackPlaceholder) {
+    if (previousDraftText) {
+      user += `\n\nPrevious draft:\n${previousDraftText}\n`;
+    }
+    if (feedback) {
+      user += `\nUser feedback:\n${feedback}\n`;
+    }
+  }
 
   return { system: systemTemplate, user, context };
 }
@@ -171,6 +188,8 @@ module.exports = async function handler(req, res) {
   }
 
   const leadId = payload?.leadId ? String(payload.leadId) : null;
+  const feedback = payload?.feedback != null ? String(payload.feedback).trim() : '';
+  const parentDraftId = payload?.parentDraftId ? String(payload.parentDraftId) : null;
   if (!leadId) return json(res, 400, { ok: false, error: 'Missing leadId' });
 
   const { data: lead, error: leadErr } = await supabaseAdmin
@@ -193,7 +212,25 @@ module.exports = async function handler(req, res) {
   if (profErr) return json(res, 500, { ok: false, error: profErr.message });
 
   const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
-  const { system, user, context } = buildPrompt({ lead, apify: lead.apify_profile_json, aboutMe });
+  let previousDraftText = null;
+  if (parentDraftId) {
+    const { data: parent, error: parentErr } = await supabaseAdmin
+      .from('linkedin_ai_drafts')
+      .select('draft_message,user_id,lead_id')
+      .eq('id', parentDraftId)
+      .maybeSingle();
+    if (!parentErr && parent && String(parent.user_id) === String(userData.user.id) && String(parent.lead_id) === String(lead.id)) {
+      previousDraftText = parent.draft_message ? String(parent.draft_message) : null;
+    }
+  }
+
+  const { system, user, context } = buildPrompt({
+    lead,
+    apify: lead.apify_profile_json,
+    aboutMe,
+    feedback: feedback || null,
+    previousDraftText,
+  });
 
   let text;
   try {
@@ -215,7 +252,7 @@ module.exports = async function handler(req, res) {
       original_draft: text,
       ai_model: model,
       ai_prompt: user,
-      ai_context: context,
+      ai_context: { ...context, parent_draft_id: parentDraftId || null },
     })
     .select('id')
     .single();
