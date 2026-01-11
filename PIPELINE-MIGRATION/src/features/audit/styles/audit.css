@@ -1,0 +1,212 @@
+/**
+ * Audit Page Styles
+ * 
+ * Scoped styles for the /audit route
+ * All styles are scoped under .audit-main to avoid conflicts with main site
+ */
+
+.audit-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-main {
+  flex: 1;
+  background: linear-gradient(135deg, #1E3A8A 0%, #374151 100%);
+  padding: 40px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simplified-pipeline-demo {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Pipeline Container - Matches original styling */
+.audit-main .pipeline-container {
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  position: relative;
+  min-height: 400px;
+  border: 2px solid #1E3A8A;
+}
+
+.audit-main .pipeline-container canvas {
+  height: 400px !important;
+  max-height: 400px;
+}
+
+.audit-main #pipelineCanvas {
+  width: 100%;
+  height: 400px !important;
+  max-height: 400px;
+  border-radius: 15px;
+  display: block;
+}
+
+/* Loading Overlay */
+.audit-main .loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #1E3A8A;
+  border-radius: 15px;
+  z-index: 100;
+  font-weight: 500;
+}
+
+/* Desktop Scenario Buttons */
+.desktop-scenario-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+/* Mobile Scenario Switcher */
+.audit-main .mobile-scenario-switcher {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 12px 0;
+}
+
+.audit-main .mobile-scenario-switcher .toggle-btn {
+  flex: 1;
+}
+
+.audit-main .mobile-toggle-row {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+/* Scenario Toggle Buttons */
+.audit-main .toggle-btn {
+  padding: 12px 24px;
+  border: 2px solid #1E3A8A;
+  background: white;
+  color: #1E3A8A;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+}
+
+.audit-main .toggle-btn:hover {
+  background: #1E3A8A;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.audit-main .toggle-btn.active {
+  background: #1E3A8A;
+  color: white;
+  box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+}
+
+/* Pill Progress Styling */
+.audit-main .toggle-btn.pill-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.audit-main .toggle-btn.pill-progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: calc(var(--pill-progress, 0) * 100%);
+  background: #40c057; /* Green fill */
+  transition: width 0.9s ease;
+  z-index: 0;
+}
+
+.audit-main .toggle-btn.pill-progress .pill-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Calendly Section */
+.calendly-section {
+  text-align: center;
+  margin-top: 30px;
+  padding: 20px;
+}
+
+.calendly-btn {
+  background: white;
+  color: #1E3A8A;
+  border: 2px solid #1E3A8A;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.calendly-btn:hover {
+  background: #1E3A8A;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .audit-main {
+    padding: 20px 10px;
+  }
+
+  .audit-main .toggle-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .audit-main .mobile-scenario-switcher {
+    display: block;
+    margin: 8px 0 12px 0;
+  }
+
+  .audit-main .mobile-toggle-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .audit-main .mobile-scenario-switcher .toggle-btn {
+    width: 100%;
+  }
+
+  .calendly-btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .audit-main .pipeline-container {
+    padding: 15px;
+  }
+}

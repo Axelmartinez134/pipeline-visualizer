@@ -1,0 +1,78 @@
+/**
+ * Pipeline-Specific Styles
+ * 
+ * Additional styles specific to the 3D pipeline visualization
+ * These complement the main audit.css and educational-overlays.css
+ */
+
+/* Ensure canvas sizing is consistent */
+.audit-main .pipeline-container canvas {
+  width: 100% !important;
+  height: 400px !important;
+  max-height: 400px !important;
+  display: block;
+}
+
+/* 3D Labels (rendered by Three.js Text) */
+.audit-main .pipeline-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  color: #1E3A8A;
+}
+
+/* Prevent canvas from being selected/dragged */
+.audit-main #pipelineCanvas {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+}
+
+/* WebGL Context Lost Fallback */
+.audit-main .webgl-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(220, 38, 38, 0.1);
+  border: 2px solid #DC2626;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #DC2626;
+  font-weight: 600;
+  z-index: 200;
+}
+
+/* Mobile: Adjust canvas height */
+@media (max-width: 768px) {
+  .audit-main .pipeline-container canvas {
+    height: 350px !important;
+    max-height: 350px !important;
+  }
+
+  .audit-main #pipelineCanvas {
+    height: 350px !important;
+    max-height: 350px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .audit-main .pipeline-container canvas {
+    height: 300px !important;
+    max-height: 300px !important;
+  }
+
+  .audit-main #pipelineCanvas {
+    height: 300px !important;
+    max-height: 300px !important;
+  }
+
+  .audit-main .pipeline-container {
+    min-height: 300px;
+  }
+}

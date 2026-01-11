@@ -1,0 +1,30 @@
+🎯 UPLOAD THESE FILES TO LOVABLE AND SAY THIS:
+===================================================
+
+I'm uploading the missing Educational Overlays component that the OverlayManager.js needs.
+
+THE ISSUE:
+- OverlayManager.js has logic to update overlays
+- But the actual HTML elements don't exist in the DOM
+- Result: Wrong overlay appears (thought bubbles instead of bottleneck list)
+
+THE FIX:
+I'm uploading 3 files:
+1. EducationalOverlays.jsx - React component with overlay HTML
+2. EducationalOverlays.css - Complete styling
+3. INTEGRATION-INSTRUCTIONS.md - Step-by-step integration guide
+
+WHAT TO DO:
+1. Add EducationalOverlays.jsx and .css to src/components/
+2. Import EducationalOverlays in SimplifiedPipelineDemo.jsx
+3. Render <EducationalOverlays /> inside the pipeline-container div
+4. Initialize overlays after 3D system loads (see instructions)
+
+RESULT:
+The bottom overlay will show "Your Highest-Priority Bottlenecks: 1. Fulfillment, 2., 3." with a red triangle pointing to the bottleneck stage. This is the CORRECT overlay (not the process-specific thought bubbles).
+
+Please read INTEGRATION-INSTRUCTIONS.md for complete step-by-step guidance. Follow those steps exactly to integrate the overlays into SimplifiedPipelineDemo.
+
+The overlays will then work with the existing OverlayManager.js logic to display bottleneck priorities correctly.
+
+

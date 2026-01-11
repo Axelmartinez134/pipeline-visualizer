@@ -1,0 +1,52 @@
+🚨 BATCH 3 - CRITICAL MISSING FILES
+====================================
+
+UPLOAD THESE 3 FILES TO LOVABLE NOW
+------------------------------------
+
+These files are imported by the files you already uploaded:
+
+1. 3d-components-ThoughtBubbles.js
+   → Imported by SceneManager.js
+   → Creates HTML overlay bubbles (even if hidden)
+
+2. 3d-constants-processContent.js
+   → Imported by UIController.js  
+   → Contains process automation content
+
+3. esmSetup.js
+   → Sets up window.THREE and window.gsap globals
+   → Required for the 3D system to work
+
+
+📤 UPLOAD INSTRUCTIONS
+-----------------------
+
+In Lovable, upload these 3 files and say:
+
+---
+
+I'm uploading 3 more critical files that are imported by the files already uploaded:
+
+1. ThoughtBubbles.js - imported by SceneManager
+2. processContent.js - imported by UIController  
+3. esmSetup.js - sets up THREE.js and GSAP globals
+
+These complete all the dependencies. You now have everything needed (25 files total).
+
+Please proceed with implementing SimplifiedPipelineDemo!
+
+---
+
+
+✅ AFTER THIS UPLOAD
+---------------------
+
+Total files: 25
+- Batch 1: 10 files
+- Batch 2: 12 files  
+- Batch 3: 3 files
+
+All dependencies resolved! 🚀
+
+

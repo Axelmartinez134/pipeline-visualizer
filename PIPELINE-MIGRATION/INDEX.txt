@@ -1,0 +1,187 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                 PIPELINE VISUALIZER MIGRATION PACKAGE                         ║
+║                           Version 1.0 - January 2026                          ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+📦 TOTAL FILES: 38
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 START HERE:
+   └─ LOVABLE-START-HERE.md ........ Main integration guide
+   └─ QUICK-REFERENCE.md ............ Quick reference card
+   └─ README.md ..................... Package overview
+   └─ INTEGRATION-STEPS.md .......... Detailed 11-step guide
+   └─ FILE-MANIFEST.md .............. Complete file manifest
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 CONFIGURATION:
+   └─ package-additions.json ........ Dependencies to add to package.json
+   └─ code-snippets/
+       ├─ App.tsx-route-addition.txt  Exact code for App.tsx
+       └─ index.html-calendly.txt .... Calendly script tags
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📄 PAGE COMPONENT:
+   └─ src/pages/
+       └─ AuditPage.tsx ............. Main /audit page (Header + Demo + Footer)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎨 REACT COMPONENTS:
+   └─ src/features/audit/components/
+       ├─ SimplifiedPipelineDemo.tsx  Pipeline + Buttons + Calendly
+       └─ EducationalOverlays.tsx .... Overlay HTML structure
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔌 REACT CONTEXT:
+   └─ src/features/audit/contexts/
+       └─ VisualizerContext.tsx ..... React Context for 3D API
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎨 CSS STYLES:
+   └─ src/features/audit/styles/
+       ├─ audit.css ................. Main audit page styles
+       ├─ educational-overlays.css .. Overlay styles + mobile fixes
+       └─ pipeline.css .............. Pipeline-specific styles
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎮 3D SYSTEM (24 files):
+
+   Entry Points:
+   └─ src/features/audit/3d/
+       ├─ index.js .................. Main 3D system entry
+       └─ esmSetup.js ............... Sets up THREE.js + GSAP globals
+
+   Core (9 files):
+   └─ src/features/audit/3d/core/
+       ├─ PipelineRenderer.js ....... Main orchestrator
+       ├─ SceneManager.js ........... Scene + rendering loop [MODIFIED]
+       ├─ UIController.js ........... UI interactions [MODIFIED]
+       ├─ OverlayManager.js ......... Educational overlays
+       ├─ MetricsService.js ......... Business metrics
+       ├─ TabStateManager.js ........ Tab states
+       ├─ TransitionGuard.js ........ Prevents rapid transitions
+       ├─ TutorialManager.js ........ Tutorial system (disabled)
+       └─ FormController.js ......... Lead form (not used)
+
+   Components (4 files):
+   └─ src/features/audit/3d/components/
+       ├─ Camera.js ................. 3D camera [MODIFIED]
+       ├─ Pipeline.js ............... 3D pipes [MODIFIED]
+       ├─ Lighting.js ............... Scene lighting
+       └─ ThoughtBubbles.js ......... Thought bubbles (disabled)
+
+   Constants (6 files):
+   └─ src/features/audit/3d/constants/
+       ├─ businessData.js ........... Default capacities (80,35,15,50,25)
+       ├─ cameraSettings.js ......... Camera positions
+       ├─ processContent.js ......... Process content & automations
+       ├─ deviceBreakpoints.js ...... Mobile/tablet/desktop breakpoints
+       ├─ embedBusinessData.js ...... Embed version (not used)
+       └─ embedProcessContent.js .... Embed version (not used)
+
+   Utils (3 files):
+   └─ src/features/audit/3d/utils/
+       ├─ deviceDetection.js ........ Device type detection
+       ├─ domHelpers.js ............. DOM manipulation
+       └─ errorHandling.js .......... Error management
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔑 KEY MODIFICATIONS (Already Applied):
+
+   ✅ Camera.js (Lines 59-70)
+      → Camera locked to overview position
+      → Prevents all zoom-in behavior
+
+   ✅ Pipeline.js (Lines 20, 118-124, 286-294)
+      → Water flow permanently disabled
+      → Static pipes only, no animations
+
+   ✅ SceneManager.js (Lines 173-183)
+      → Thought bubbles disabled
+      → No process-specific suggestions
+
+   ✅ UIController.js (Lines 37-47, 99-113)
+      → Tutorial system disabled
+      → Educational overlays configured
+      → Top overlay hidden, bottom overlay visible
+
+   ✅ SimplifiedPipelineDemo.tsx (Complete new component)
+      → Simplified UI (no tabs, sliders, zoom)
+      → Scenario toggle buttons only
+      → Calendly integration
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 INTEGRATION SUMMARY:
+
+   TASK 1: Copy src/features/audit/ → Target src/features/audit/
+   TASK 2: Copy src/pages/AuditPage.tsx → Target src/pages/
+   TASK 3: Add route to App.tsx (import + route)
+   TASK 4: Add Calendly script to index.html
+   TASK 5: Update package.json dependencies
+
+   Then: npm install → npm run dev → Test → Push → Deploy
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ SUCCESS CRITERIA:
+
+   ☑ Navigate to /audit works
+   ☑ 3D pipeline loads and displays correctly
+   ☑ "See After Automation" button works
+   ☑ 3-click sequence: 0% → 33% → 66% → 100%
+   ☑ Pipes grow/shrink with each click
+   ☑ Bottom overlay shows bottleneck priorities
+   ☑ "Schedule Free Consultation" opens Calendly
+   ☑ Mobile responsive (< 768px width)
+   ☑ No console errors
+   ☑ All existing routes still work
+   ☑ Build succeeds
+   ☑ Vercel deployment works
+   ☑ Production test at automatedbots.com/audit passes
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚨 CRITICAL REMINDERS:
+
+   ⚠️  DO NOT DELETE PIPELINE-MIGRATION until user confirms
+   ⚠️  Camera MUST stay locked at overview
+   ⚠️  NO water flow animations
+   ⚠️  NO thought bubbles
+   ⚠️  ONLY bottom educational overlay visible
+   ⚠️  Tutorial system MUST stay disabled
+   ⚠️  Calendly URL is placeholder (update if needed)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📂 FILE LOCATIONS:
+
+   Source (PIPELINE-MIGRATION):          Target (progress-scroll-buddy):
+   ├─ src/features/audit/            →   src/features/audit/
+   ├─ src/pages/AuditPage.tsx        →   src/pages/AuditPage.tsx
+   ├─ Code for App.tsx               →   src/App.tsx (add route)
+   ├─ Code for index.html            →   index.html (add Calendly)
+   └─ Dependencies                   →   package.json (update)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 TARGET:
+   Domain: automatedbots.com
+   Route: /audit
+   Purpose: Simplified 3D pipeline demo with 3-click automation sequence
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✨ PACKAGE READY FOR INTEGRATION! ✨
+
+Read LOVABLE-START-HERE.md for complete instructions.
+
+═══════════════════════════════════════════════════════════════════════════════

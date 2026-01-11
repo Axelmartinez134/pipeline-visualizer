@@ -1,0 +1,127 @@
+🚀 LOVABLE 10-FILE UPLOAD INSTRUCTIONS
+========================================
+
+📁 THIS FOLDER CONTAINS THE 10 MOST ESSENTIAL FILES
+----------------------------------------------------
+
+You're uploading these 10 files because Lovable has a file limit.
+These are the CORE files needed to create the SimplifiedPipelineDemo component.
+
+
+📋 WHAT'S INCLUDED (10 FILES)
+------------------------------
+
+1. README-FOR-LOVABLE.md ← COMPLETE INSTRUCTIONS (read this first!)
+2. App.jsx ← Reference for button patterns
+3. App.css ← Styles to reuse
+4. package.json ← Dependencies
+5. 3d-components-Pipeline.js ← Pipe rendering (needs modification)
+6. 3d-components-Camera.js ← Camera logic (needs modification)
+7. 3d-core-UIController.js ← UI logic (needs modification)
+8. 3d-constants-businessData.js ← Default values
+9. features-visualizer-VisualizerContext.tsx ← Context hooks
+10. features-visualizer-PipelineVisualizer.tsx ← Canvas wrapper
+
+
+📤 UPLOAD INSTRUCTIONS
+-----------------------
+
+STEP 1: Upload all 10 files to Lovable
+
+STEP 2: Use this prompt:
+
+---
+
+I'm uploading 10 core files from a React/Three.js pipeline visualizer. These files use flattened naming (e.g., "3d-core-UIController.js" was at "src/3d/core/UIController.js").
+
+Please read README-FOR-LOVABLE.md carefully for complete instructions.
+
+TASK: Create SimplifiedPipelineDemo component
+
+FILES TO CREATE:
+- src/components/SimplifiedPipelineDemo.jsx (new component)
+
+FILES TO MODIFY:
+- src/3d/components/Camera.js (lock camera to overview)
+- src/3d/components/Pipeline.js (remove water flow animations)
+- src/3d/core/UIController.js (disable tutorial system)
+
+KEY REQUIREMENTS:
+- 3D pipeline with LOCKED camera (always at overview, never moves)
+- Two buttons: "Current State" and "See After Automation"
+- 3-click sequence with pill progress (0% → 33% → 66% → 100%)
+- Stage labels visible (Marketing, Sales, Onboarding, Fulfillment, Retention)
+- NO tabs, sliders, form, zoom, play/pause, overlays, tutorial, or water animations
+- Mobile + Desktop responsive
+- Reuse existing 3D system (don't rebuild)
+
+The README has all implementation details including:
+- Exact button code to reuse from App.jsx
+- How to lock the camera
+- How to remove water flow
+- How to disable tutorial
+- Complete technical specifications
+
+Please read the README first, then implement the component following those instructions.
+
+---
+
+
+🔍 IF LOVABLE ASKS FOR MORE CONTEXT
+------------------------------------
+
+Tell Lovable:
+"The other supporting files (SceneManager, Lighting, etc.) are used internally but don't need modification. Focus on the 3 files that need changes: Camera.js, Pipeline.js, and UIController.js. All the logic you need is in these 10 files plus the README instructions."
+
+
+💡 KEY POINTS TO EMPHASIZE
+---------------------------
+
+1. README-FOR-LOVABLE.md has COMPLETE implementation details
+2. App.jsx shows the EXACT button patterns to copy
+3. Only 3 files need modification (Camera, Pipeline, UIController)
+4. The component should REUSE the existing 3D system
+5. Camera must be LOCKED to overview (never move)
+6. No water flow animations (static pipes)
+
+
+✅ WHAT LOVABLE WILL CREATE
+----------------------------
+
+After reading the README, Lovable will:
+✓ Create SimplifiedPipelineDemo.jsx component
+✓ Lock camera in Camera.js
+✓ Remove water in Pipeline.js
+✓ Disable tutorial in UIController.js
+✓ Test the implementation
+
+
+🎯 EXPECTED RESULT
+-------------------
+
+A working component that:
+- Shows 3D pipeline at overview (locked camera)
+- Has two buttons that toggle scenarios
+- 3-click sequence fills button progressively
+- Works on mobile and desktop
+- Can be imported: import SimplifiedPipelineDemo from './components/SimplifiedPipelineDemo'
+
+
+📞 TROUBLESHOOTING
+-------------------
+
+If Lovable says "I need more files":
+→ Point it to specific sections in the README
+→ The README has code examples for everything
+
+If Lovable asks about file structure:
+→ Tell it the flattened names represent nested paths
+→ Example: 3d-core-UIController.js → src/3d/core/UIController.js
+
+If Lovable asks about dependencies:
+→ They're all in package.json (React, Three.js, GSAP, etc.)
+
+
+That's it! Upload these 10 files and use the prompt above. 🚀
+
+

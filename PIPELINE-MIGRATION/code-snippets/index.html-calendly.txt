@@ -1,0 +1,35 @@
+<!-- ============================================ -->
+<!-- CODE TO ADD TO index.html -->
+<!-- ============================================ -->
+
+<!-- Add these two lines inside the <head> section -->
+<!-- Place them after your existing meta tags but before </head> -->
+
+<!-- Calendly embed script -->
+<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+
+
+<!-- EXAMPLE PLACEMENT: -->
+<!-- ------------------- -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Automated Bots</title>
+    
+    <!-- Calendly embed script -->
+    <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+    
+  </head>
+  <body>
+    <!-- rest of HTML... -->
+  </body>
+</html>
+
+
+<!-- THAT'S IT! Just add those 2 lines to <head> -->

@@ -1,0 +1,59 @@
+📱 MOBILE OVERLAY POSITIONING FIX
+==================================
+
+ISSUE:
+The educational overlays (top/bottom text bubbles) are not positioning correctly on mobile devices (screens < 768px).
+
+SYMPTOMS:
+- Overlays too wide or off-center
+- Triangle pointers in wrong position
+- Text overlapping pipeline or buttons
+- Not responsive on small screens
+
+THE FIX:
+I'm uploading mobile-specific CSS and positioning instructions.
+
+KEY CHANGES NEEDED:
+
+1. BOTTOM OVERLAY POSITION (Mobile < 768px):
+   - Position: top: 320px (from top of container)
+   - Width: max-width: 90%, min-width: 280px
+   - Centered: left: 50%, transform: translateX(-50%)
+
+2. TEXT SIZING (Mobile):
+   - Font size: 0.85rem (smaller than desktop)
+   - Padding: 12px 16px (tighter than desktop)
+   - Line height: 1.4
+
+3. TRIANGLE POINTERS (Mobile):
+   - Smaller: 20px tall (vs 25px desktop)
+   - Position: top: -20px (closer to overlay)
+   - Use --triangle-left CSS variable (set by OverlayManager.js)
+
+4. RESPONSIVE BREAKPOINTS:
+   @media (max-width: 768px) - Main mobile styles
+   @media (max-width: 374px) - Extra small devices
+
+COMPLETE CSS:
+See MOBILE-OVERLAY-POSITIONING.md for full mobile CSS code.
+
+VISUAL GUIDE:
+Mobile Layout (< 768px):
+- Canvas: 400px tall
+- Bottom overlay: 320px from top (80px space from bottom of canvas)
+- Triangle: Points to bottleneck pipe
+- Buttons: Below overlay with 20px margin
+
+TESTING:
+Test at these widths:
+- 320px (iPhone SE)
+- 375px (iPhone 12 Mini)
+- 390px (iPhone 12/13)
+- 414px (iPhone Pro Max)
+
+RESULT:
+Bottom overlay (bottleneck priority list) displays correctly centered on mobile with proper spacing, readable text, and triangle pointing to the correct pipe.
+
+Read MOBILE-OVERLAY-POSITIONING.md for complete implementation details and CSS code.
+
+

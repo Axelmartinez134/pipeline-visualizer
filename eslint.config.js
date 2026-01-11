@@ -19,8 +19,12 @@ export default [
         window: 'readonly',
         document: 'readonly',
         console: 'readonly',
+        CustomEvent: 'readonly',
+        IntersectionObserver: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
         requestAnimationFrame: 'readonly',
         performance: 'readonly',
         alert: 'readonly',
@@ -44,6 +48,10 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/no-unescaped-entities': 'off',
       'react/prop-types': 'off',
+      // TypeScript handles undefined identifiers and DOM types; this rule
+      // produces false-positives in TS/TSX (e.g. HTMLDivElement).
+      'no-undef': 'off',
+      'no-empty': ['error', { allowEmptyCatch: true }],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'warn'
     },

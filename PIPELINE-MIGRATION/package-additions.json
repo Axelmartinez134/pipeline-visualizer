@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "three": "^0.178.0",
+    "troika-three-text": "^0.52.4",
+    "three-spritetext": "^1.10.0"
+  },
+  "notes": [
+    "Update existing 'three' dependency from ^0.162.0 to ^0.178.0",
+    "Add 'troika-three-text' - used for 3D text labels on pipeline",
+    "Add 'three-spritetext' - used for 3D sprite text elements",
+    "After updating package.json, run: npm install"
+  ]
+}

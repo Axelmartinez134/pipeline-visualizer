@@ -1,0 +1,30 @@
+// ============================================
+// CODE TO ADD TO src/App.tsx
+// ============================================
+
+// STEP 1: Add this import at the top with other page imports
+// -----------------------------------------------------------
+
+import AuditPage from './pages/AuditPage';
+
+
+// STEP 2: Add this route inside your <Routes> component
+// ------------------------------------------------------
+
+<Route path="/audit" element={<AuditPage />} />
+
+
+// FULL CONTEXT - Your Routes section should look like this:
+// ----------------------------------------------------------
+
+<Routes>
+  <Route path="/" element={<Index />} />
+  <Route path="/testimonials" element={<Testimonials />} />
+  <Route path="/ai-audit" element={<AIAudit />} />
+  <Route path="/audit" element={<AuditPage />} />        {/* ← NEW ROUTE */}
+  <Route path="/case-study/nick" element={<CaseStudy />} />
+  <Route path="*" element={<NotFound />} />
+</Routes>
+
+
+// THAT'S IT! Only these 2 changes needed to App.tsx

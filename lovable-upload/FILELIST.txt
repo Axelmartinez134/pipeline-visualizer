@@ -1,0 +1,71 @@
+LOVABLE UPLOAD FOLDER - FILE LIST
+==================================
+
+Total Files: 30
+
+ROOT CONFIGURATION FILES (5):
+- package.json (1.6K)
+- vite.config.js (316B)
+- tsconfig.json (440B)
+- index.html (1.2K)
+- README-FOR-LOVABLE.md (24K) ← START HERE!
+
+MAIN APP FILES (5):
+- main.jsx (675B)
+- App.jsx (17K) ← Reference for existing structure
+- App.css (28K) ← Styles to reuse
+- index.css (13K)
+- esmSetup.js (522B)
+
+3D SYSTEM - CONSTANTS (4):
+- 3d-constants-businessData.js (1.6K) ← Default values
+- 3d-constants-cameraSettings.js (2.6K) ← Camera positions
+- 3d-constants-processContent.js (7.8K)
+- 3d-constants-deviceBreakpoints.js (510B)
+
+3D SYSTEM - COMPONENTS (4):
+- 3d-components-Camera.js (23K) ← NEEDS MODIFICATION (lock camera)
+- 3d-components-Lighting.js (1.8K)
+- 3d-components-Pipeline.js (14K) ← NEEDS MODIFICATION (remove water)
+- 3d-components-ThoughtBubbles.js (7.3K)
+
+3D SYSTEM - CORE (7):
+- 3d-core-PipelineRenderer.js (4.7K)
+- 3d-core-SceneManager.js (7.6K)
+- 3d-core-UIController.js (43K) ← NEEDS MODIFICATION (disable tutorial)
+- 3d-core-OverlayManager.js (12K)
+- 3d-core-MetricsService.js (1.2K)
+- 3d-core-TabStateManager.js (1.5K)
+- 3d-core-TransitionGuard.js (1.8K)
+
+3D SYSTEM - UTILS (3):
+- 3d-utils-deviceDetection.js (1.4K)
+- 3d-utils-domHelpers.js (3.6K)
+- 3d-utils-errorHandling.js (7.8K)
+
+3D SYSTEM - ENTRY (1):
+- 3d-index.js (1.4K)
+
+REACT INTEGRATION (2):
+- features-visualizer-PipelineVisualizer.tsx (4.0K) ← Canvas wrapper
+- features-visualizer-VisualizerContext.tsx (5.1K) ← Context/hooks
+
+==================================
+
+KEY FILES TO FOCUS ON:
+1. README-FOR-LOVABLE.md - Complete instructions
+2. App.jsx - Reference for button patterns
+3. 3d-components-Pipeline.js - Remove water flow
+4. 3d-components-Camera.js - Lock camera
+5. 3d-core-UIController.js - Disable tutorial
+6. features-visualizer-VisualizerContext.tsx - Button interactions
+
+FILES THAT NEED MODIFICATION:
+→ 3d-components-Camera.js (lock to overview)
+→ 3d-components-Pipeline.js (remove water animations)
+→ 3d-core-UIController.js (disable tutorial/overlays)
+
+NEW FILE TO CREATE:
+→ src/components/SimplifiedPipelineDemo.jsx
+
+

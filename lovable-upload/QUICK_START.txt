@@ -1,0 +1,103 @@
+🚀 QUICK START GUIDE FOR LOVABLE
+==================================
+
+STEP 1: Upload This Folder
+---------------------------
+Upload the entire "lovable-upload" folder to Lovable.
+All 30 files are needed for context.
+
+
+STEP 2: Give Lovable This Prompt
+---------------------------------
+Copy and paste this into Lovable:
+
+---
+
+I need you to create a SimplifiedPipelineDemo component using these files as reference.
+
+**Context:** These files are flattened from a nested folder structure. The naming convention is:
+- 3d-core-UIController.js → originally at src/3d/core/UIController.js
+- features-visualizer-PipelineVisualizer.tsx → originally at src/features/visualizer/PipelineVisualizer.tsx
+
+**Task:** Read the complete instructions in README-FOR-LOVABLE.md and create the SimplifiedPipelineDemo component.
+
+**Key Requirements:**
+1. Create: src/components/SimplifiedPipelineDemo.jsx (new file)
+2. Modify: src/3d/components/Camera.js (lock camera to overview)
+3. Modify: src/3d/components/Pipeline.js (remove water flow)
+4. Modify: src/3d/core/UIController.js (disable tutorial)
+5. Create: src/components/SimplifiedPipelineDemo.css (optional - can reuse App.css)
+
+**What it should do:**
+- Show 3D pipeline at locked overview position
+- Two buttons: "Current State" and "See After Automation"
+- 3-click manual sequence (button fills progressively)
+- No tabs, sliders, form, or extra UI
+- Mobile + Desktop responsive
+
+Please read README-FOR-LOVABLE.md for complete details, then implement the SimplifiedPipelineDemo component.
+
+---
+
+
+STEP 3: Let Lovable Work
+-------------------------
+Lovable will:
+✓ Read the README instructions
+✓ Analyze the existing code
+✓ Create the new component
+✓ Modify the necessary files
+✓ Test the implementation
+
+
+STEP 4: Review & Test
+----------------------
+After Lovable creates the component, test:
+- [ ] Pipeline loads at overview (camera doesn't move)
+- [ ] Stage labels visible
+- [ ] No water animations
+- [ ] "See After Automation" 3-click sequence works
+- [ ] Pill fills 33% → 66% → 100%
+- [ ] "Current State" resets everything
+- [ ] Works on mobile
+
+
+STEP 5: Integrate Into Your Site
+---------------------------------
+Import the component wherever you want:
+
+```jsx
+import SimplifiedPipelineDemo from './components/SimplifiedPipelineDemo';
+
+function HomePage() {
+  return (
+    <div>
+      <SimplifiedPipelineDemo />
+      {/* Your other content */}
+    </div>
+  );
+}
+```
+
+
+TROUBLESHOOTING
+---------------
+If Lovable has questions:
+- Refer it back to README-FOR-LOVABLE.md
+- App.jsx has reference patterns for buttons
+- UIController.js has the switchScenario() logic
+- Pipeline.js has the pipe rendering logic
+
+
+IMPORTANT NOTES
+---------------
+✅ All 30 files are needed for context
+✅ README-FOR-LOVABLE.md has complete instructions
+✅ Flattened names preserve original paths
+✅ Only 3 files need modification (Camera, Pipeline, UIController)
+✅ 1 new file needs creation (SimplifiedPipelineDemo.jsx)
+
+
+That's it! Good luck! 🎯
+
+
