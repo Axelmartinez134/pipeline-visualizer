@@ -81,6 +81,7 @@ async function getLeadById(leadId) {
   // Aimfox lead details endpoint (needed to resolve public_identifier/profile_url).
   // Some Aimfox accounts expose different paths; try a small set of common variants.
   const id = encodeURIComponent(String(leadId).trim());
+  // Per docs: GET /api/v2/leads/:lead_id
   const candidates = [`/leads/${id}`, `/leads/${id}/details`, `/leads/${id}/detail`, `/leads/${id}/profile`];
   let lastErr = null;
   for (const path of candidates) {

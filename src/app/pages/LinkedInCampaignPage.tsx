@@ -151,15 +151,6 @@ export default function LinkedInCampaignPage() {
       const accessToken = session?.access_token;
       if (!accessToken) throw new Error('Not signed in');
 
-      let profileUrl = lead.profile_url;
-      if (!profileUrl) {
-        const entered = window.prompt(
-          'This lead is missing a LinkedIn profile URL.\n\nPaste it here (e.g. https://www.linkedin.com/in/username/):',
-          '',
-        );
-        if (entered) profileUrl = entered.trim();
-      }
-
       const res = await fetch('/api/internal/enrich/apify', {
         method: 'POST',
         headers: {
@@ -169,11 +160,40 @@ export default function LinkedInCampaignPage() {
         body: JSON.stringify({
           action: 'start',
           linkedinId: lead.linkedin_id,
-          profileUrl: profileUrl || undefined,
+          profileUrl: lead.profile_url || undefined,
         }),
       });
       const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(json?.error || `Enrich failed (${res.status})`);
+      if (!res.ok) {
+        // If server still can't resolve a URL (after Aimfox lead-details), prompt once and retry.
+        const msg = String(json?.error || `Enrich failed (${res.status})`);
+        if (msg.toLowerCase().includes('missing linkedin profile url')) {
+          const entered = window.prompt(
+            'This lead is missing a LinkedIn profile URL.\n\nPaste it here (e.g. https://www.linkedin.com/in/username/):',
+            '',
+          );
+          if (entered && entered.trim()) {
+            const retry = await fetch('/api/internal/enrich/apify', {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'start',
+                linkedinId: lead.linkedin_id,
+                profileUrl: entered.trim(),
+              }),
+            });
+            const retryJson = await retry.json().catch(() => null);
+            if (!retry.ok) throw new Error(String(retryJson?.error || `Enrich failed (${retry.status})`));
+          } else {
+            throw new Error(msg);
+          }
+        } else {
+          throw new Error(msg);
+        }
+      }
       await fetchLeads();
     } catch (e: any) {
       setError(e?.message || 'Enrich failed');

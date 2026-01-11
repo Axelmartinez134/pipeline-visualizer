@@ -47,7 +47,7 @@ function pickFirstString(...values) {
 
 function extractAimfoxLeadProfileUrl(payload) {
   // Be defensive: aimfox response shapes can differ.
-  const candidate =
+  const profileUrlCandidate =
     payload?.profile_url ||
     payload?.profileUrl ||
     payload?.lead?.profile_url ||
@@ -59,7 +59,13 @@ function extractAimfoxLeadProfileUrl(payload) {
     payload?.lead?.target?.profile_url ||
     payload?.lead?.target?.profileUrl ||
     null;
-  return pickFirstString(candidate);
+  const direct = pickFirstString(profileUrlCandidate);
+  if (direct) return direct;
+
+  // Aimfox lead-details commonly returns `lead.public_identifier` (no explicit URL).
+  const pid = extractAimfoxPublicIdentifier(payload);
+  if (pid) return `https://www.linkedin.com/in/${pid}/`;
+  return null;
 }
 
 function extractAimfoxPublicIdentifier(payload) {
