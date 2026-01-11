@@ -129,15 +129,25 @@ async function startActorRunWithFallback(actorId, inputVariants) {
 }
 
 function buildPostsInput({ profileUrl }) {
-  const includeComments = String(process.env.APIFY_INCLUDE_COMMENTS || 'true').toLowerCase() === 'true';
-  const includeReactions = String(process.env.APIFY_INCLUDE_REACTIONS || 'true').toLowerCase() === 'true';
-  const postsLimit = parseInt(process.env.APIFY_POSTS_LIMIT || '50', 10);
+  const includeQuotePosts = String(process.env.APIFY_INCLUDE_QUOTE_POSTS || 'true').toLowerCase() === 'true';
+  const includeReposts = String(process.env.APIFY_INCLUDE_REPOSTS || 'true').toLowerCase() === 'true';
+
+  const maxPosts = parseInt(process.env.APIFY_MAX_POSTS || process.env.APIFY_POSTS_LIMIT || '5', 10);
+  const maxComments = parseInt(process.env.APIFY_MAX_COMMENTS || '5', 10);
+  const maxReactions = parseInt(process.env.APIFY_MAX_REACTIONS || '5', 10);
+
+  const scrapeComments = String(process.env.APIFY_SCRAPE_COMMENTS || 'false').toLowerCase() === 'true';
+  const scrapeReactions = String(process.env.APIFY_SCRAPE_REACTIONS || 'false').toLowerCase() === 'true';
 
   return {
-    profileUrl,
-    includeComments,
-    includeReactions,
-    maxPosts: Number.isFinite(postsLimit) ? postsLimit : 50,
+    includeQuotePosts,
+    includeReposts,
+    maxComments: Number.isFinite(maxComments) ? maxComments : 5,
+    maxPosts: Number.isFinite(maxPosts) ? maxPosts : 5,
+    maxReactions: Number.isFinite(maxReactions) ? maxReactions : 5,
+    scrapeComments,
+    scrapeReactions,
+    targetUrls: [profileUrl],
   };
 }
 
