@@ -59,7 +59,24 @@ export default function LinkedInSettingsPage() {
   const [cta, setCta] = useState('');
   const [aiOpenerSystemPrompt, setAiOpenerSystemPrompt] = useState(DEFAULT_AI_SYSTEM_PROMPT);
   const [aiOpenerUserPromptTemplate, setAiOpenerUserPromptTemplate] = useState(DEFAULT_AI_USER_PROMPT_TEMPLATE);
-  const [myProfileJsonText, setMyProfileJsonText] = useState('{\n  \n}');
+  const [myProfileJsonText, setMyProfileJsonText] = useState(
+    JSON.stringify(
+      {
+        basics: {
+          name: '',
+          headline: '',
+          location: '',
+        },
+        schools: [],
+        companies: [],
+        industries: [],
+        interests: [],
+        notes: '',
+      },
+      null,
+      2,
+    ),
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -100,7 +117,20 @@ export default function LinkedInSettingsPage() {
           setAiOpenerSystemPrompt(openerSystem);
           setAiOpenerUserPromptTemplate(openerUser);
           setMyProfileJsonText(
-            profile.data.my_profile_json ? JSON.stringify(profile.data.my_profile_json, null, 2) : '{\n  \n}',
+            profile.data.my_profile_json
+              ? JSON.stringify(profile.data.my_profile_json, null, 2)
+              : JSON.stringify(
+                  {
+                    basics: { name: '', headline: '', location: '' },
+                    schools: [],
+                    companies: [],
+                    industries: [],
+                    interests: [],
+                    notes: '',
+                  },
+                  null,
+                  2,
+                ),
           );
         }
       }
@@ -161,7 +191,9 @@ export default function LinkedInSettingsPage() {
         const parsed = JSON.parse(myProfileJsonText || 'null');
         myProfileJson = parsed;
       } catch {
-        throw new Error('My profile JSON is not valid JSON');
+        throw new Error(
+          'My profile JSON is not valid JSON. Use valid JSON like: {"schools":["University of..."],"location":"Denver"}',
+        );
       }
 
       const { error: upErr } = await supabase.from('user_profiles').upsert({
