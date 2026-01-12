@@ -6,22 +6,28 @@ import { Input } from '../../components/ui/input';
 import { supabase } from '../../lib/supabaseClient';
 
 const DEFAULT_AI_SYSTEM_PROMPT = [
-  'You write concise, high-performing first messages for LinkedIn outreach.',
+  "You write short, warm LinkedIn first messages using a 'Sell by Chat' approach.",
+  'This is a FIRST message. It must be pure connection and relationship-building.',
+  'CRITICAL: Do NOT mention the offer, services, pricing, demos, calls, or any CTA. No pitch slap.',
+  'Personalize only if it feels natural and non-creepy. Never force a post reference.',
+  'If you cannot find a real shared connection supported by the provided data, use a simple warm opener.',
+  'Max 1 emoji.',
   'Return ONLY the message text. No quotes, no bullet points, no analysis.',
-  'Keep it natural and human. Avoid sounding like AI.',
 ].join('\n');
 
 const DEFAULT_AI_USER_PROMPT_TEMPLATE = [
   'Write a first message to {{LEAD_NAME}}.',
   '{{#if LEAD_OCCUPATION}}They are: {{LEAD_OCCUPATION}}{{/if}}',
   '',
-  'Use the following context (JSON) and follow it strictly:',
+  'Use the following context (JSON) to craft a warm opener. Do not invent facts.',
   '{{CONTEXT_JSON}}',
   '',
   'Constraints:',
-  '- 2 short paragraphs max',
-  '- 1 question max',
-  '- No links unless CTA prefs explicitly request it',
+  '- Aim for 2 sentences, max 4 sentences',
+  '- Max 1 emoji',
+  "- Pure connection (no 'market research' framing)",
+  '- No offer mention, no CTA, no links',
+  '- If a genuine shared connection exists between prospect and me, you may reference it briefly',
 ].join('\n');
 
 type WebhookEventRow = {
@@ -53,6 +59,7 @@ export default function LinkedInSettingsPage() {
   const [cta, setCta] = useState('');
   const [aiSystemPrompt, setAiSystemPrompt] = useState(DEFAULT_AI_SYSTEM_PROMPT);
   const [aiUserPromptTemplate, setAiUserPromptTemplate] = useState(DEFAULT_AI_USER_PROMPT_TEMPLATE);
+  const [myProfileJsonText, setMyProfileJsonText] = useState('{\n  \n}');
 
   useEffect(() => {
     let mounted = true;
@@ -74,7 +81,9 @@ export default function LinkedInSettingsPage() {
       if (userId) {
         const profile = await supabase
           .from('user_profiles')
-          .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template')
+          .select(
+            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template,my_profile_json',
+          )
           .eq('user_id', userId)
           .maybeSingle();
         if (profile.data) {
@@ -84,6 +93,9 @@ export default function LinkedInSettingsPage() {
           setCta(profile.data.calendly_cta_prefs || '');
           setAiSystemPrompt(profile.data.ai_system_prompt || DEFAULT_AI_SYSTEM_PROMPT);
           setAiUserPromptTemplate(profile.data.ai_user_prompt_template || DEFAULT_AI_USER_PROMPT_TEMPLATE);
+          setMyProfileJsonText(
+            profile.data.my_profile_json ? JSON.stringify(profile.data.my_profile_json, null, 2) : '{\n  \n}',
+          );
         }
       }
 
@@ -138,6 +150,14 @@ export default function LinkedInSettingsPage() {
       const userId = session?.user?.id;
       if (!userId) throw new Error('Not signed in');
 
+      let myProfileJson = null;
+      try {
+        const parsed = JSON.parse(myProfileJsonText || 'null');
+        myProfileJson = parsed;
+      } catch {
+        throw new Error('My profile JSON is not valid JSON');
+      }
+
       const { error: upErr } = await supabase.from('user_profiles').upsert({
         user_id: userId,
         offer_icp: offerIcp,
@@ -146,6 +166,7 @@ export default function LinkedInSettingsPage() {
         calendly_cta_prefs: cta,
         ai_system_prompt: aiSystemPrompt,
         ai_user_prompt_template: aiUserPromptTemplate,
+        my_profile_json: myProfileJson,
       });
       if (upErr) throw new Error(upErr.message);
       setProfileSaved('Saved.');
@@ -338,6 +359,19 @@ export default function LinkedInSettingsPage() {
                   onChange={(e) => setAiUserPromptTemplate(e.target.value)}
                   placeholder="Example: Write a first LinkedIn message to {{LEAD_NAME}}...\n\nContext:\n{{CONTEXT_JSON}}"
                   className="min-h-[200px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <div className="text-sm font-medium">My profile JSON (for shared connections)</div>
+                <div className="text-xs text-white/50">
+                  Put facts about you here (schools, locations, industries, interests). The AI will only reference shared
+                  connections supported by this JSON + the prospect context.
+                </div>
+                <Textarea
+                  value={myProfileJsonText}
+                  onChange={(e) => setMyProfileJsonText(e.target.value)}
+                  className="min-h-[220px] bg-black/40 border-white/15 text-white placeholder:text-white/40 font-mono text-xs"
                 />
               </div>
 

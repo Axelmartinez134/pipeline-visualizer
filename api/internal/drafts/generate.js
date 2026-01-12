@@ -95,6 +95,9 @@ function buildPrompt({ lead, apify, aboutMe, feedback, previousDraftText }) {
       hard_constraints: aboutMe?.hard_constraints || null,
       calendly_cta_prefs: aboutMe?.calendly_cta_prefs || null,
     },
+    me: {
+      my_profile_json: aboutMe?.my_profile_json || null,
+    },
     apify: {
       profile_summary: profileSummary,
       recent_posts: recentPosts,
@@ -206,7 +209,9 @@ module.exports = async function handler(req, res) {
 
   const { data: aboutMe, error: profErr } = await supabaseAdmin
     .from('user_profiles')
-    .select('offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template')
+    .select(
+      'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template,my_profile_json',
+    )
     .eq('user_id', userData.user.id)
     .maybeSingle();
   if (profErr) return json(res, 500, { ok: false, error: profErr.message });

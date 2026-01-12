@@ -127,6 +127,18 @@ Inside `/linkedin/*`:
 ## Phase 6 — Drafts + approval workflow (manual drafts first)
 **Goal:** Build the approval queue + the context foundation for high-quality drafts.
 
+### Prompting approach (Sell by Chat — V1 openers)
+- Adopt Sell-by-Chat for initial outreach:
+  - Pure connection opener (no “research” framing)
+  - No offer mention / no CTA in opener (avoid pitch slap)
+  - 2 sentences target, max 4 sentences, max 1 emoji
+  - Personalize only when natural and supported by data
+- Store prompts in Supabase per user (`user_profiles`) so prompt edits apply immediately:
+  - `ai_system_prompt`
+  - `ai_user_prompt_template`
+- Store “your profile context” for shared-connection openers:
+  - `user_profiles.my_profile_json` (JSONB)
+
 ### 6A) Database changes (foundation)
 - Extend `linkedin_leads`:
   - `apify_profile_json` (JSONB)
@@ -186,6 +198,18 @@ When a lead is inserted via `accepted` webhook:
 - Subsequent replies appear via webhook
 
 **Checkpoint:** Ask user for approval to continue to Phase 8.
+
+---
+
+## Sell by Chat (future phases)
+**Goal:** Extend Sell-by-Chat beyond first messages once we have conversation history in DB.
+
+- Add conversation-aware inputs to generation:
+  - `event_type`, last inbound message, and followup count
+  - deterministic method selection (Direct / Smokescreen / Research Frame) in server logic
+  - “STOP” behavior when followups exceed threshold or prospect asks to stop
+- Feed structured conversation context + method selection into Claude
+- Keep prompts editable in Supabase, but keep method selection deterministic in code to avoid drift
 
 ---
 
