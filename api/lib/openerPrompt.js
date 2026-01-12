@@ -20,23 +20,32 @@ function buildOpenerPrompt({ lead, apify, profile, feedback, previousDraftText }
     content: p.content || null,
   }));
 
+  // IMPORTANT: keep "data" separated from "rules/constraints" to reduce model confusion.
   const context = {
-    lead: {
+    meta: {
+      mode: 'opener',
+      goal: 'Write a warm first message (pure connection).',
+      lead_enriched: Boolean(apify),
+    },
+    prospect: {
       full_name: lead?.full_name || null,
       occupation,
       campaign_name: lead?.campaign_name || null,
     },
-    about_me: {
+    me: {
+      // Free-form facts about you to enable genuine shared connections.
+      profile_text: profile?.my_profile_text || null,
+      // legacy (kept for backwards compatibility, but not required)
+      profile_json: profile?.my_profile_json || null,
+    },
+    constraints: {
+      // These are your global preferences; the prompt decides how/when to apply them.
       offer_icp: profile?.offer_icp || null,
       tone_guidelines: profile?.tone_guidelines || null,
       hard_constraints: profile?.hard_constraints || null,
       calendly_cta_prefs: profile?.calendly_cta_prefs || null,
     },
-    me: {
-      my_profile_text: profile?.my_profile_text || null,
-      my_profile_json: profile?.my_profile_json || null, // legacy
-    },
-    apify: {
+    enrichment: {
       profile_summary: profileSummary,
       recent_posts: recentPosts,
     },
