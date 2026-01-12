@@ -210,11 +210,18 @@ module.exports = async function handler(req, res) {
   const { data: aboutMe, error: profErr } = await supabaseAdmin
     .from('user_profiles')
     .select(
-      'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template,my_profile_json',
+      'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_opener_system_prompt,ai_opener_user_prompt_template,ai_system_prompt,ai_user_prompt_template,my_profile_json',
     )
     .eq('user_id', userData.user.id)
     .maybeSingle();
   if (profErr) return json(res, 500, { ok: false, error: profErr.message });
+
+  // For now we ONLY generate openers. Use dedicated opener prompts if set.
+  const aboutMeWithOpenerPrompts = {
+    ...aboutMe,
+    ai_system_prompt: aboutMe?.ai_opener_system_prompt || aboutMe?.ai_system_prompt || null,
+    ai_user_prompt_template: aboutMe?.ai_opener_user_prompt_template || aboutMe?.ai_user_prompt_template || null,
+  };
 
   const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
   let previousDraftText = null;
@@ -232,7 +239,7 @@ module.exports = async function handler(req, res) {
   const { system, user, context } = buildPrompt({
     lead,
     apify: lead.apify_profile_json,
-    aboutMe,
+    aboutMe: aboutMeWithOpenerPrompts,
     feedback: feedback || null,
     previousDraftText,
   });

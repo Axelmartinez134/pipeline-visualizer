@@ -57,8 +57,8 @@ export default function LinkedInSettingsPage() {
   const [tone, setTone] = useState('');
   const [constraints, setConstraints] = useState('');
   const [cta, setCta] = useState('');
-  const [aiSystemPrompt, setAiSystemPrompt] = useState(DEFAULT_AI_SYSTEM_PROMPT);
-  const [aiUserPromptTemplate, setAiUserPromptTemplate] = useState(DEFAULT_AI_USER_PROMPT_TEMPLATE);
+  const [aiOpenerSystemPrompt, setAiOpenerSystemPrompt] = useState(DEFAULT_AI_SYSTEM_PROMPT);
+  const [aiOpenerUserPromptTemplate, setAiOpenerUserPromptTemplate] = useState(DEFAULT_AI_USER_PROMPT_TEMPLATE);
   const [myProfileJsonText, setMyProfileJsonText] = useState('{\n  \n}');
 
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function LinkedInSettingsPage() {
         const profile = await supabase
           .from('user_profiles')
           .select(
-            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_system_prompt,ai_user_prompt_template,my_profile_json',
+            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_opener_system_prompt,ai_opener_user_prompt_template,ai_system_prompt,ai_user_prompt_template,my_profile_json',
           )
           .eq('user_id', userId)
           .maybeSingle();
@@ -91,8 +91,14 @@ export default function LinkedInSettingsPage() {
           setTone(profile.data.tone_guidelines || '');
           setConstraints(profile.data.hard_constraints || '');
           setCta(profile.data.calendly_cta_prefs || '');
-          setAiSystemPrompt(profile.data.ai_system_prompt || DEFAULT_AI_SYSTEM_PROMPT);
-          setAiUserPromptTemplate(profile.data.ai_user_prompt_template || DEFAULT_AI_USER_PROMPT_TEMPLATE);
+          const openerSystem =
+            profile.data.ai_opener_system_prompt || profile.data.ai_system_prompt || DEFAULT_AI_SYSTEM_PROMPT;
+          const openerUser =
+            profile.data.ai_opener_user_prompt_template ||
+            profile.data.ai_user_prompt_template ||
+            DEFAULT_AI_USER_PROMPT_TEMPLATE;
+          setAiOpenerSystemPrompt(openerSystem);
+          setAiOpenerUserPromptTemplate(openerUser);
           setMyProfileJsonText(
             profile.data.my_profile_json ? JSON.stringify(profile.data.my_profile_json, null, 2) : '{\n  \n}',
           );
@@ -164,8 +170,12 @@ export default function LinkedInSettingsPage() {
         tone_guidelines: tone,
         hard_constraints: constraints,
         calendly_cta_prefs: cta,
-        ai_system_prompt: aiSystemPrompt,
-        ai_user_prompt_template: aiUserPromptTemplate,
+        // Opener prompts (Sell-by-Chat V1)
+        ai_opener_system_prompt: aiOpenerSystemPrompt,
+        ai_opener_user_prompt_template: aiOpenerUserPromptTemplate,
+        // Legacy fields kept in sync for backward compatibility
+        ai_system_prompt: aiOpenerSystemPrompt,
+        ai_user_prompt_template: aiOpenerUserPromptTemplate,
         my_profile_json: myProfileJson,
       });
       if (upErr) throw new Error(upErr.message);
@@ -338,25 +348,25 @@ export default function LinkedInSettingsPage() {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-sm font-medium">AI system prompt</div>
+                <div className="text-sm font-medium">Opener system prompt</div>
                 <Textarea
-                  value={aiSystemPrompt}
-                  onChange={(e) => setAiSystemPrompt(e.target.value)}
+                  value={aiOpenerSystemPrompt}
+                  onChange={(e) => setAiOpenerSystemPrompt(e.target.value)}
                   placeholder="High-level behavior instructions for Claude."
                   className="min-h-[120px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
                 />
               </div>
 
               <div className="grid gap-2">
-                <div className="text-sm font-medium">AI user prompt template</div>
+                <div className="text-sm font-medium">Opener user prompt template</div>
                 <div className="text-xs text-white/50">
                   Placeholders: <span className="font-mono">{'{'}{'{'}LEAD_NAME{'}'}{'}'}</span>,{' '}
                   <span className="font-mono">{'{'}{'{'}LEAD_OCCUPATION{'}'}{'}'}</span>,{' '}
                   <span className="font-mono">{'{'}{'{'}CONTEXT_JSON{'}'}{'}'}</span>
                 </div>
                 <Textarea
-                  value={aiUserPromptTemplate}
-                  onChange={(e) => setAiUserPromptTemplate(e.target.value)}
+                  value={aiOpenerUserPromptTemplate}
+                  onChange={(e) => setAiOpenerUserPromptTemplate(e.target.value)}
                   placeholder="Example: Write a first LinkedIn message to {{LEAD_NAME}}...\n\nContext:\n{{CONTEXT_JSON}}"
                   className="min-h-[200px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
                 />
