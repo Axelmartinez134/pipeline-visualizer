@@ -59,23 +59,15 @@ export default function LinkedInSettingsPage() {
   const [cta, setCta] = useState('');
   const [aiOpenerSystemPrompt, setAiOpenerSystemPrompt] = useState(DEFAULT_AI_SYSTEM_PROMPT);
   const [aiOpenerUserPromptTemplate, setAiOpenerUserPromptTemplate] = useState(DEFAULT_AI_USER_PROMPT_TEMPLATE);
-  const [myProfileJsonText, setMyProfileJsonText] = useState(
-    JSON.stringify(
-      {
-        basics: {
-          name: '',
-          headline: '',
-          location: '',
-        },
-        schools: [],
-        companies: [],
-        industries: [],
-        interests: [],
-        notes: '',
-      },
-      null,
-      2,
-    ),
+  const [myProfileText, setMyProfileText] = useState(
+    [
+      'Name: Axel Martinez',
+      'Location: Denver, CO',
+      'School: University of Colorado Boulder',
+      'Past: Protiviti',
+      'Now: AutomatedBots.com',
+      'Interests: Theory of Constraints, AI automation',
+    ].join('\n'),
   );
 
   useEffect(() => {
@@ -99,7 +91,7 @@ export default function LinkedInSettingsPage() {
         const profile = await supabase
           .from('user_profiles')
           .select(
-            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_opener_system_prompt,ai_opener_user_prompt_template,ai_system_prompt,ai_user_prompt_template,my_profile_json',
+            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_opener_system_prompt,ai_opener_user_prompt_template,ai_system_prompt,ai_user_prompt_template,my_profile_text,my_profile_json',
           )
           .eq('user_id', userId)
           .maybeSingle();
@@ -116,21 +108,11 @@ export default function LinkedInSettingsPage() {
             DEFAULT_AI_USER_PROMPT_TEMPLATE;
           setAiOpenerSystemPrompt(openerSystem);
           setAiOpenerUserPromptTemplate(openerUser);
-          setMyProfileJsonText(
-            profile.data.my_profile_json
-              ? JSON.stringify(profile.data.my_profile_json, null, 2)
-              : JSON.stringify(
-                  {
-                    basics: { name: '', headline: '', location: '' },
-                    schools: [],
-                    companies: [],
-                    industries: [],
-                    interests: [],
-                    notes: '',
-                  },
-                  null,
-                  2,
-                ),
+          // Prefer TEXT field; fall back to legacy jsonb if present.
+          setMyProfileText(
+            profile.data.my_profile_text ||
+              (profile.data.my_profile_json ? JSON.stringify(profile.data.my_profile_json, null, 2) : '') ||
+              '',
           );
         }
       }
@@ -186,16 +168,6 @@ export default function LinkedInSettingsPage() {
       const userId = session?.user?.id;
       if (!userId) throw new Error('Not signed in');
 
-      let myProfileJson = null;
-      try {
-        const parsed = JSON.parse(myProfileJsonText || 'null');
-        myProfileJson = parsed;
-      } catch {
-        throw new Error(
-          'My profile JSON is not valid JSON. Use valid JSON like: {"schools":["University of..."],"location":"Denver"}',
-        );
-      }
-
       const { error: upErr } = await supabase.from('user_profiles').upsert({
         user_id: userId,
         offer_icp: offerIcp,
@@ -208,7 +180,7 @@ export default function LinkedInSettingsPage() {
         // Legacy fields kept in sync for backward compatibility
         ai_system_prompt: aiOpenerSystemPrompt,
         ai_user_prompt_template: aiOpenerUserPromptTemplate,
-        my_profile_json: myProfileJson,
+        my_profile_text: myProfileText,
       });
       if (upErr) throw new Error(upErr.message);
       setProfileSaved('Saved.');
@@ -405,15 +377,15 @@ export default function LinkedInSettingsPage() {
               </div>
 
               <div className="grid gap-2">
-                <div className="text-sm font-medium">My profile JSON (for shared connections)</div>
+                <div className="text-sm font-medium">My profile (for shared connections)</div>
                 <div className="text-xs text-white/50">
                   Put facts about you here (schools, locations, industries, interests). The AI will only reference shared
-                  connections supported by this JSON + the prospect context.
+                  connections supported by this text + the prospect context.
                 </div>
                 <Textarea
-                  value={myProfileJsonText}
-                  onChange={(e) => setMyProfileJsonText(e.target.value)}
-                  className="min-h-[220px] bg-black/40 border-white/15 text-white placeholder:text-white/40 font-mono text-xs"
+                  value={myProfileText}
+                  onChange={(e) => setMyProfileText(e.target.value)}
+                  className="min-h-[180px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
                 />
               </div>
 
