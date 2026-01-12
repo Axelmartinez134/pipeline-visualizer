@@ -91,7 +91,7 @@ export default function LinkedInSettingsPage() {
         const profile = await supabase
           .from('user_profiles')
           .select(
-            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_opener_system_prompt,ai_opener_user_prompt_template,ai_system_prompt,ai_user_prompt_template,my_profile_text,my_profile_json',
+            'offer_icp,tone_guidelines,hard_constraints,calendly_cta_prefs,ai_opener_system_prompt,ai_opener_user_prompt_template,ai_system_prompt,ai_user_prompt_template,my_profile_text',
           )
           .eq('user_id', userId)
           .maybeSingle();
@@ -108,12 +108,8 @@ export default function LinkedInSettingsPage() {
             DEFAULT_AI_USER_PROMPT_TEMPLATE;
           setAiOpenerSystemPrompt(openerSystem);
           setAiOpenerUserPromptTemplate(openerUser);
-          // Prefer TEXT field; fall back to legacy jsonb if present.
-          setMyProfileText(
-            profile.data.my_profile_text ||
-              (profile.data.my_profile_json ? JSON.stringify(profile.data.my_profile_json, null, 2) : '') ||
-              '',
-          );
+          // Plain text only (no JSON fallback).
+          if (profile.data.my_profile_text) setMyProfileText(profile.data.my_profile_text);
         }
       }
 
