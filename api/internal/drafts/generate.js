@@ -1,4 +1,5 @@
 const { getSupabaseAdminClient } = require('../../lib/supabaseAdmin');
+const { buildOpenerPrompt } = require('../../lib/openerPrompt');
 
 function json(res, status, payload) {
   res.statusCode = status;
@@ -61,105 +62,6 @@ async function anthropicGenerate({ system, user, model }) {
   return out;
 }
 
-function buildPrompt({ lead, apify, aboutMe, feedback, previousDraftText }) {
-  const leadName = lead?.full_name || 'the lead';
-  const occupation = lead?.occupation || '';
-
-  const profile = apify?.profile?.items?.[0] || null;
-  const posts = Array.isArray(apify?.posts?.items) ? apify.posts.items.slice(0, 2) : [];
-
-  const profileSummary = profile
-    ? {
-        headline: profile.headline || null,
-        summary: profile.summary || null,
-        jobTitle: profile.jobTitle || null,
-        companyName: profile.companyName || null,
-      }
-    : null;
-
-  const recentPosts = posts.map((p) => ({
-    linkedinUrl: p.linkedinUrl || null,
-    postedAt: p.postedAt?.date || null,
-    content: p.content || null,
-  }));
-
-  const context = {
-    lead: {
-      full_name: lead?.full_name || null,
-      occupation,
-      campaign_name: lead?.campaign_name || null,
-    },
-    about_me: {
-      offer_icp: aboutMe?.offer_icp || null,
-      tone_guidelines: aboutMe?.tone_guidelines || null,
-      hard_constraints: aboutMe?.hard_constraints || null,
-      calendly_cta_prefs: aboutMe?.calendly_cta_prefs || null,
-    },
-    me: {
-      my_profile_text: aboutMe?.my_profile_text || null,
-      // legacy field retained for any existing data
-      my_profile_json: aboutMe?.my_profile_json || null,
-    },
-    apify: {
-      profile_summary: profileSummary,
-      recent_posts: recentPosts,
-    },
-    rerun: {
-      feedback: feedback || null,
-      previous_draft: previousDraftText || null,
-    },
-  };
-
-  const defaultSystem = [
-    'You write concise, high-performing first messages for LinkedIn outreach.',
-    'Return ONLY the message text. No quotes, no bullet points, no analysis.',
-    'Keep it natural and human. Avoid sounding like AI.',
-  ].join('\n');
-
-  const defaultUserTemplate = [
-    'Write a first message to {{LEAD_NAME}}.',
-    '{{#if LEAD_OCCUPATION}}They are: {{LEAD_OCCUPATION}}{{/if}}',
-    '',
-    'Use the following context (JSON) and follow it strictly:',
-    '{{CONTEXT_JSON}}',
-    '',
-    'Constraints:',
-    '- 2 short paragraphs max',
-    '- 1 question max',
-    '- No links unless CTA prefs explicitly request it',
-  ].join('\n');
-
-  const systemTemplate =
-    (aboutMe?.ai_system_prompt != null ? String(aboutMe.ai_system_prompt) : '').trim() || defaultSystem;
-  const userTemplate =
-    (aboutMe?.ai_user_prompt_template != null ? String(aboutMe.ai_user_prompt_template) : '').trim() ||
-    defaultUserTemplate;
-
-  const contextJson = JSON.stringify(context, null, 2);
-  const hasFeedbackPlaceholder = userTemplate.includes('{{FEEDBACK}}') || userTemplate.includes('{{PREVIOUS_DRAFT}}');
-  let user = userTemplate
-    .replaceAll('{{LEAD_NAME}}', String(leadName))
-    .replaceAll('{{LEAD_OCCUPATION}}', String(occupation))
-    .replaceAll('{{CONTEXT_JSON}}', contextJson)
-    .replaceAll('{{FEEDBACK}}', String(feedback || ''))
-    .replaceAll('{{PREVIOUS_DRAFT}}', String(previousDraftText || ''))
-    // simple conditional cleanup if user leaves our default handlebars-ish marker in place
-    .replace(/\{\{#if\s+LEAD_OCCUPATION\}\}[\s\S]*?\{\{\/if\}\}/g, occupation ? `They are: ${occupation}` : '')
-    .trim();
-
-  // If template doesn't explicitly place feedback, still inject it for reruns.
-  if (!hasFeedbackPlaceholder) {
-    if (previousDraftText) {
-      user += `\n\nPrevious draft:\n${previousDraftText}\n`;
-    }
-    if (feedback) {
-      user += `\nUser feedback:\n${feedback}\n`;
-    }
-  }
-
-  return { system: systemTemplate, user, context };
-}
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -218,13 +120,6 @@ module.exports = async function handler(req, res) {
     .maybeSingle();
   if (profErr) return json(res, 500, { ok: false, error: profErr.message });
 
-  // For now we ONLY generate openers. Use dedicated opener prompts if set.
-  const aboutMeWithOpenerPrompts = {
-    ...aboutMe,
-    ai_system_prompt: aboutMe?.ai_opener_system_prompt || aboutMe?.ai_system_prompt || null,
-    ai_user_prompt_template: aboutMe?.ai_opener_user_prompt_template || aboutMe?.ai_user_prompt_template || null,
-  };
-
   const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
   let previousDraftText = null;
   if (parentDraftId) {
@@ -238,10 +133,10 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const { system, user, context } = buildPrompt({
+  const { system, user, context, promptSource, userTemplate } = buildOpenerPrompt({
     lead,
     apify: lead.apify_profile_json,
-    aboutMe: aboutMeWithOpenerPrompts,
+    profile: aboutMe,
     feedback: feedback || null,
     previousDraftText,
   });
@@ -265,8 +160,21 @@ module.exports = async function handler(req, res) {
       draft_message: text,
       original_draft: text,
       ai_model: model,
+      ai_system_prompt: system,
       ai_prompt: user,
-      ai_context: { ...context, parent_draft_id: parentDraftId || null },
+      ai_context: { ...context, parent_draft_id: parentDraftId || null, prompt_source: promptSource },
+      ai_request_json: {
+        provider: 'anthropic',
+        endpoint: '/v1/messages',
+        anthropic_version: '2023-06-01',
+        model,
+        max_tokens: 300,
+        temperature: 0.5,
+        system,
+        user,
+        user_template: userTemplate,
+        prompt_source: promptSource,
+      },
     })
     .select('id')
     .single();

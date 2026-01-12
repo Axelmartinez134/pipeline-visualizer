@@ -69,6 +69,11 @@ export default function LinkedInSettingsPage() {
       'Interests: Theory of Constraints, AI automation',
     ].join('\n'),
   );
+  const [previewLeadId, setPreviewLeadId] = useState<string>('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewResult, setPreviewResult] = useState<any | null>(null);
+  const [previewLeads, setPreviewLeads] = useState<Array<{ id: string; full_name: string | null }>>([]);
+  const [promptSourceLabel, setPromptSourceLabel] = useState<string>('—');
 
   useEffect(() => {
     let mounted = true;
@@ -110,6 +115,19 @@ export default function LinkedInSettingsPage() {
           setAiOpenerUserPromptTemplate(openerUser);
           // Plain text only (no JSON fallback).
           if (profile.data.my_profile_text) setMyProfileText(profile.data.my_profile_text);
+
+          // Prompt source label (what will be used)
+          const systemSource = profile.data.ai_opener_system_prompt
+            ? 'opener'
+            : profile.data.ai_system_prompt
+            ? 'legacy'
+            : 'default';
+          const userSource = profile.data.ai_opener_user_prompt_template
+            ? 'opener'
+            : profile.data.ai_user_prompt_template
+            ? 'legacy'
+            : 'default';
+          setPromptSourceLabel(`system: ${systemSource} · user: ${userSource}`);
         }
       }
 
@@ -120,6 +138,14 @@ export default function LinkedInSettingsPage() {
       setLatest((events.data?.[0] as WebhookEventRow) || null);
       setLeadCount(typeof leads.count === 'number' ? leads.count : null);
       setLoading(false);
+
+      // Load recent leads for preview picker
+      const leadsForPreview = await supabase
+        .from('linkedin_leads')
+        .select('id,full_name')
+        .order('connection_accepted_at', { ascending: false, nullsFirst: false })
+        .limit(50);
+      if (leadsForPreview.data) setPreviewLeads(leadsForPreview.data as any);
     })();
 
     return () => {
@@ -152,6 +178,34 @@ export default function LinkedInSettingsPage() {
       setError(e?.message || 'Sync failed');
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const runPromptPreview = async () => {
+    setPreviewLoading(true);
+    setPreviewResult(null);
+    setError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not signed in');
+      if (!previewLeadId) throw new Error('Pick a lead');
+
+      const res = await fetch('/api/internal/drafts/preview', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ leadId: previewLeadId }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || `Preview failed (${res.status})`);
+      setPreviewResult(json);
+    } catch (e: any) {
+      setError(e?.message || 'Preview failed');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -383,6 +437,72 @@ export default function LinkedInSettingsPage() {
                   onChange={(e) => setMyProfileText(e.target.value)}
                   className="min-h-[180px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
                 />
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-black/30 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold">Prompt diagnostics</div>
+                    <div className="text-xs text-white/50">Resolved prompt source: {promptSourceLabel}</div>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <div className="text-sm font-medium">Rendered preview (pick a lead)</div>
+                  <select
+                    className="h-10 rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-white"
+                    value={previewLeadId}
+                    onChange={(e) => setPreviewLeadId(e.target.value)}
+                  >
+                    <option value="">Select a lead…</option>
+                    {previewLeads.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.full_name || l.id}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      className="bg-white/5 text-white border border-white/10 hover:bg-white/10 hover:text-white"
+                      onClick={runPromptPreview}
+                      disabled={previewLoading}
+                    >
+                      {previewLoading ? 'Rendering…' : 'Render preview'}
+                    </Button>
+                  </div>
+                </div>
+
+                {previewResult ? (
+                  <details className="rounded-lg border border-white/10 bg-black/40 p-3">
+                    <summary className="cursor-pointer select-none text-sm font-medium text-white/80">
+                      View rendered input (system + user + context)
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      <div className="text-xs text-white/50">
+                        Source: system={previewResult?.promptSource?.system} · user={previewResult?.promptSource?.user}
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">System prompt</div>
+                        <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/60 border border-white/10 p-3 text-xs text-white/80 max-h-[240px] overflow-auto">
+                          {previewResult?.system || '—'}
+                        </pre>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">User prompt (rendered)</div>
+                        <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/60 border border-white/10 p-3 text-xs text-white/80 max-h-[240px] overflow-auto">
+                          {previewResult?.user || '—'}
+                        </pre>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">Context JSON</div>
+                        <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/60 border border-white/10 p-3 text-xs text-white/80 max-h-[260px] overflow-auto">
+                          {previewResult?.context ? JSON.stringify(previewResult.context, null, 2) : '—'}
+                        </pre>
+                      </div>
+                    </div>
+                  </details>
+                ) : null}
               </div>
 
               <div className="flex items-center gap-3">

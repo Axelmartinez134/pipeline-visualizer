@@ -12,6 +12,11 @@ type DraftRow = {
   draft_message: string;
   created_at: string;
   lead: { id: string; full_name: string | null; occupation: string | null } | null;
+  ai_model?: string | null;
+  ai_system_prompt?: string | null;
+  ai_prompt?: string | null;
+  ai_context?: any | null;
+  ai_request_json?: any | null;
 };
 
 export default function LinkedInQueuePage() {
@@ -29,7 +34,9 @@ export default function LinkedInQueuePage() {
     setError(null);
     const { data, error: err } = await supabase
       .from('linkedin_ai_drafts')
-      .select('id,status,draft_type,draft_message,created_at,lead:linkedin_leads(id,full_name,occupation)')
+      .select(
+        'id,status,draft_type,draft_message,created_at,ai_model,ai_system_prompt,ai_prompt,ai_context,ai_request_json,lead:linkedin_leads(id,full_name,occupation)',
+      )
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(200);
@@ -182,6 +189,45 @@ export default function LinkedInQueuePage() {
                     className="min-h-[220px] bg-black/40 border-white/15 text-white placeholder:text-white/40"
                   />
                 </div>
+
+                <details className="rounded-xl border border-white/10 bg-black/30 p-4">
+                  <summary className="cursor-pointer select-none text-sm font-medium text-white/80">
+                    Debug (exact AI input)
+                  </summary>
+                  <div className="mt-4 space-y-4">
+                    <div className="text-xs text-white/50">
+                      Model: <span className="text-white/80">{active.ai_model || '—'}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">System prompt</div>
+                      <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/40 border border-white/10 p-3 text-xs text-white/80 max-h-[240px] overflow-auto">
+                        {active.ai_system_prompt || '— (not stored on older drafts)'}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">User prompt (rendered)</div>
+                      <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/40 border border-white/10 p-3 text-xs text-white/80 max-h-[240px] overflow-auto">
+                        {active.ai_prompt || '—'}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Context JSON</div>
+                      <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/40 border border-white/10 p-3 text-xs text-white/80 max-h-[260px] overflow-auto">
+                        {active.ai_context ? JSON.stringify(active.ai_context, null, 2) : '—'}
+                      </pre>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Full request JSON</div>
+                      <pre className="whitespace-pre-wrap break-words rounded-lg bg-black/40 border border-white/10 p-3 text-xs text-white/80 max-h-[260px] overflow-auto">
+                        {active.ai_request_json ? JSON.stringify(active.ai_request_json, null, 2) : '—'}
+                      </pre>
+                    </div>
+                  </div>
+                </details>
 
                 <div className="grid gap-2">
                   <div className="text-sm font-medium">AI feedback (optional)</div>
