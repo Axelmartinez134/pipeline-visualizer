@@ -13,10 +13,10 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../auth/AuthContext';
 
 const linkedInNavItems = [
+  { to: '/linkedin/queue', label: 'Inbox', badge: 1, icon: Inbox },
   { to: '/linkedin/upload', label: 'Upload & Enrich', badge: 2, icon: FileUp },
   { to: '/linkedin/generate', label: 'Generate Messages', badge: 5, icon: MessageSquareText },
   { to: '/linkedin/campaign', label: 'Campaign Status', icon: BarChart3 },
-  { to: '/linkedin/queue', label: 'Approval Queue', badge: 1, icon: Inbox },
   { to: '/linkedin/booked', label: 'Booked Calls', icon: CalendarCheck2 },
   { to: '/linkedin/settings', label: 'Settings', icon: Settings },
 ];

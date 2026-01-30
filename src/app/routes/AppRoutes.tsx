@@ -5,7 +5,7 @@ import LoginPage from '../pages/LoginPage';
 import BlankProductPage from '../pages/BlankProductPage';
 import LinkedInCampaignPage from '../pages/LinkedInCampaignPage';
 import LinkedInSettingsPage from '../pages/LinkedInSettingsPage';
-import LinkedInQueuePage from '../pages/LinkedInQueuePage';
+import LinkedInInboxPage from '../pages/LinkedInInboxPage';
 import NotFound from '../../pages/NotFound.jsx';
 import AuditRoute from './AuditRoute';
 import OfferingsRoute from './OfferingsRoute';
@@ -35,7 +35,7 @@ export default function AppRoutes() {
           <Route path="/linkedin/upload" element={<BlankProductPage productName="Upload & Enrich" />} />
           <Route path="/linkedin/generate" element={<BlankProductPage productName="Generate Messages" />} />
           <Route path="/linkedin/campaign" element={<LinkedInCampaignPage />} />
-          <Route path="/linkedin/queue" element={<LinkedInQueuePage />} />
+          <Route path="/linkedin/queue" element={<LinkedInInboxPage />} />
           <Route path="/linkedin/booked" element={<BlankProductPage productName="Booked Calls" />} />
           <Route path="/linkedin/settings" element={<LinkedInSettingsPage />} />
 

@@ -100,5 +100,20 @@ async function getLeadById(leadId) {
   throw lastErr || new Error('Aimfox lead details request failed');
 }
 
-module.exports = { listRecentLeads, getLeadById };
+function getAimfoxSenderAccountId() {
+  const id = process.env.AIMFOX_SENDER_ACCOUNT_ID;
+  if (!id) throw new Error('Missing AIMFOX_SENDER_ACCOUNT_ID env var');
+  return String(id).trim();
+}
+
+async function startConversation({ accountId, message, recipients, recipientUrns }) {
+  const aid = encodeURIComponent(String(accountId || '').trim());
+  if (!aid) throw new Error('Missing accountId');
+  const body = recipientUrns
+    ? { message, recipient_urns: recipientUrns }
+    : { message, recipients: recipients || [] };
+  return aimfoxFetch(`/accounts/${aid}/conversations`, { method: 'POST', body });
+}
+
+module.exports = { listRecentLeads, getLeadById, getAimfoxSenderAccountId, startConversation };
 
