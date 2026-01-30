@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 function localApiRoutes() {
   const require = createRequire(import.meta.url);
   const root = process.cwd();
+  const catchAllPath = path.join(root, 'api', '[...path].js');
 
   return {
     name: 'local-api-routes',
@@ -18,29 +19,18 @@ function localApiRoutes() {
           const pathname = decodeURIComponent(url.pathname || '/');
           if (!pathname.startsWith('/api/')) return next();
 
-          // Prevent path traversal.
-          if (pathname.includes('..')) {
-            res.statusCode = 400;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ ok: false, error: 'Invalid path' }));
-            return;
-          }
-
-          // Map `/api/foo/bar` -> `<root>/api/foo/bar.js`
-          const base = pathname.endsWith('.js') ? pathname.slice(1) : `${pathname.slice(1)}.js`;
-          const filePath = path.join(root, base);
-
-          if (!fs.existsSync(filePath)) {
-            res.statusCode = 404;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ ok: false, error: `No local api handler for ${pathname}` }));
-            return;
-          }
+          if (!fs.existsSync(catchAllPath)) return next();
 
           // Reload handler on every request (fast dev iteration).
           let handler;
           try {
-            const resolved = require.resolve(filePath);
+            // Clear downstream module cache so edits to `server/api/**` hot-reload too.
+            const marker = `${path.sep}server${path.sep}api${path.sep}`;
+            for (const k of Object.keys(require.cache)) {
+              if (k.includes(marker)) delete require.cache[k];
+            }
+
+            const resolved = require.resolve(catchAllPath);
             delete require.cache[resolved];
             handler = require(resolved);
           } catch (e) {
@@ -58,6 +48,7 @@ function localApiRoutes() {
           }
 
           try {
+            // Ensure req.url is preserved (so router can see the original path).
             await Promise.resolve(handler(req, res));
           } catch (e) {
             // If an async handler throws, make sure we don't drop the connection
